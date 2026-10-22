@@ -10,7 +10,7 @@ export interface Lightformer {
 }
 
 export interface LightingPreset {
-  id: LightingPresetId
+  id: LightingPresetId | 'neon' | 'circuit'
   label: string
   background: string
   floor: string
@@ -22,6 +22,8 @@ export interface LightingPreset {
   hemi: { sky: string; ground: string; intensity: number }
   envBackground: string
   formers: Lightformer[]
+  /** strength of the blurred floor reflection, desktop only */
+  reflect?: number
 }
 
 // Each preset is built from local light panels rendered into a cube map,
@@ -129,3 +131,51 @@ export const LIGHTING: LightingPreset[] = [
 ]
 
 export const lightingOf = (id: LightingPresetId) => LIGHTING.find((l) => l.id === id) ?? LIGHTING[0]
+
+// Lighting for the two scenic environments. They are not in the studio
+// lighting menu because the scenery decides the light.
+export const NEON_LIGHTING: LightingPreset = {
+  id: 'neon',
+  label: 'Neon District',
+  background: '#040409',
+  floor: '#07080d',
+  floorRoughness: 0.08,
+  fog: [8, 30],
+  exposure: 1.1,
+  key: { color: '#b9c8ff', intensity: 0.9, position: [3, 7, 3] },
+  fill: { color: '#ff3d9a', intensity: 0.55 },
+  hemi: { sky: '#2a2f5a', ground: '#040409', intensity: 0.4 },
+  envBackground: '#020205',
+  reflect: 3,
+  formers: [
+    { color: '#ff2f8f', intensity: 3.2, position: [-3, 1.6, 8], scale: [6, 0.3, 1] },
+    { color: '#22d3ff', intensity: 3.2, position: [3, 1.6, -8], scale: [6, 0.3, 1] },
+    { color: '#2f7bff', intensity: 2.4, position: [0, 1.2, 7], scale: [16, 0.12, 1] },
+    { color: '#7a5cff', intensity: 1.6, position: [0, 1.2, -7], scale: [16, 0.12, 1] },
+    { color: '#ffffff', intensity: 1.4, position: [0, 6, 0], scale: [8, 0.5, 1], rotation: [Math.PI / 2, 0, 0] },
+    { color: '#ffb35c', intensity: 2.2, position: [-8, 3, -3], scale: [0.5, 0.5, 1], form: 'circle', rotation: [0, Math.PI / 2, 0] },
+    { color: '#22d3ff', intensity: 1.4, position: [8, 1.4, 0], scale: [6, 0.2, 1], rotation: [0, -Math.PI / 2, 0] },
+  ],
+}
+
+export const CIRCUIT_LIGHTING: LightingPreset = {
+  id: 'circuit',
+  label: 'Performance Circuit',
+  background: '#0a0d12',
+  floor: '#15181d',
+  floorRoughness: 0.62,
+  fog: [14, 46],
+  exposure: 1.05,
+  key: { color: '#f4f7ff', intensity: 2.8, position: [-5, 9, 4] },
+  fill: { color: '#8fb4ff', intensity: 0.6 },
+  hemi: { sky: '#8796b3', ground: '#0d0f12', intensity: 0.55 },
+  envBackground: '#0b0e14',
+  reflect: 0.8,
+  formers: [
+    { color: '#ffffff', intensity: 3.6, position: [-6, 7, 6], scale: [4, 2, 1], rotation: [Math.PI / 3, 0, 0] },
+    { color: '#ffffff', intensity: 3.6, position: [6, 7, -6], scale: [4, 2, 1], rotation: [-Math.PI / 3, 0, 0] },
+    { color: '#dfe7ff', intensity: 1.6, position: [0, 2, 9], scale: [20, 1, 1] },
+    { color: '#ff3040', intensity: 1.2, position: [0, 0.6, -9], scale: [20, 0.2, 1] },
+    { color: '#ffffff', intensity: 1, position: [9, 2, 0], scale: [10, 0.8, 1], rotation: [0, -Math.PI / 2, 0] },
+  ],
+}

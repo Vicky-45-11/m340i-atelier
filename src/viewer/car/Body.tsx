@@ -132,7 +132,21 @@ const finFin = once(() => {
 const FIN_X = -0.98
 
 /** The painted shell, glass and fixed details. Paint never touches glass, rubber or trim. */
-export function BodyShell({ accent, roof }: { accent: SideAccentId; roof: RoofId }) {
+/** Lifts the greenhouse off the body for the cockpit cutaway */
+function Liftable({ lifted, children }: { lifted: boolean; children: ReactNode }) {
+  const g = useRef<THREE.Group>(null)
+  useFrame((_, dt) => {
+    const el = g.current
+    if (!el) return
+    const goal = lifted ? 1.8 : 0
+    el.position.y = THREE.MathUtils.lerp(el.position.y, goal, 1 - Math.exp(-Math.min(dt, 0.1) * 3))
+    if (Math.abs(el.position.y - goal) < 0.002) el.position.y = goal
+    el.visible = el.position.y < 1.7
+  })
+  return <group ref={g}>{children}</group>
+}
+
+export function BodyShell({ accent, roof, cutaway = false }: { accent: SideAccentId; roof: RoofId; cutaway?: boolean }) {
   const m = useMat()
   const shell = shellGeometry()
   const gh = greenhouseGeometry()
@@ -156,6 +170,7 @@ export function BodyShell({ accent, roof }: { accent: SideAccentId; roof: RoofId
       <mesh geometry={linerGeometry()} position={[AXLE_REAR, TYRE_RADIUS, 0]} material={m.get('liner')} />
 
       {/* greenhouse: glass all round, painted roof and pillars over it */}
+      <Liftable lifted={cutaway}>
       <mesh geometry={gh.glass} material={m.get('glass')} renderOrder={2} />
       <mesh geometry={gh.headliner} material={m.get('headliner')} />
       {[gh.railL, gh.railR, gh.cL, gh.cR].map((g, i) => (
@@ -166,6 +181,7 @@ export function BodyShell({ accent, roof }: { accent: SideAccentId; roof: RoofId
       {[gh.bL, gh.bR, gh.sailL, gh.sailR].map((g, i) => (
         <mesh key={i} geometry={g} material={m.get('glossBlack')} />
       ))}
+      </Liftable>
 
       {[1, -1].map((s) => (
         <group key={s} scale={s === 1 ? undefined : MIRROR_Z}>

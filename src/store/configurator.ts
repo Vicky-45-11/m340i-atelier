@@ -15,6 +15,8 @@ import { configFromUrl, loadStoredConfig, storeConfig } from '../lib/share'
 
 const HISTORY_LIMIT = 60
 
+export type EnvironmentId = 'studio' | 'night' | 'track'
+
 interface State {
   config: Configuration
   past: Configuration[]
@@ -39,6 +41,14 @@ interface State {
   lightShow: boolean
   /** index into the parts tour, or null when the tour is off */
   tour: number | null
+  /** scenery around the car: midnight studio, neon district or circuit */
+  environment: EnvironmentId
+  /** Sport mode swaps the blue accent for red across the UI and the scene */
+  sport: boolean
+  sound: boolean
+  /** cinematic camera that cycles through framed shots */
+  presentation: boolean
+  storyReady: boolean
 
   setOption: <K extends OptionKey>(key: K, value: Configuration[K]) => void
   setCustomPaint: (hex: string) => void
@@ -63,6 +73,11 @@ interface State {
   setIsolate: (on: boolean) => void
   setLightShow: (on: boolean) => void
   setTour: (i: number | null) => void
+  setEnvironment: (e: EnvironmentId) => void
+  setSport: (on: boolean) => void
+  setSound: (on: boolean) => void
+  setPresentation: (on: boolean) => void
+  setStoryReady: () => void
 }
 
 function initialConfig(): Configuration {
@@ -108,6 +123,11 @@ export const useConfigurator = create<State>((set, get) => {
     isolate: false,
     lightShow: false,
     tour: null,
+    environment: 'studio',
+    sport: false,
+    sound: false,
+    presentation: false,
+    storyReady: false,
 
     setOption: (key, value) => commit({ ...get().config, [key]: value }),
     setCustomPaint: (hex) => commit({ ...get().config, paint: 'custom', customPaint: hex }),
@@ -149,7 +169,7 @@ export const useConfigurator = create<State>((set, get) => {
         ...(moveCamera ? { camera: moveCamera, cameraNonce: s.cameraNonce + 1 } : {}),
       })),
     hover: (c) => set({ hovered: c }),
-    setCamera: (c) => set((s) => ({ camera: c, cameraNonce: s.cameraNonce + 1 })),
+    setCamera: (c) => set((s) => ({ camera: c, cameraNonce: s.cameraNonce + 1, presentation: false })),
     setViewMode: (m) => set({ viewMode: m, ...(m !== 'studio' ? { compare: false } : {}) }),
     setLighting: (l) => set({ lighting: l }),
     setCompare: (on) => set({ compare: on, ...(on ? { viewMode: 'studio' as ViewMode, selected: null } : {}) }),
@@ -168,6 +188,11 @@ export const useConfigurator = create<State>((set, get) => {
     setIsolate: (on) => set({ isolate: on }),
     setLightShow: (on) => set({ lightShow: on }),
     setTour: (i) => set(i === null ? { tour: null, isolate: false, selected: null } : { tour: i, compare: false }),
+    setEnvironment: (e) => set({ environment: e }),
+    setSport: (on) => set({ sport: on }),
+    setSound: (on) => set({ sound: on }),
+    setPresentation: (on) => set((s) => (on ? { presentation: true, autoRotate: false, compare: false, tour: null } : { presentation: false, camera: s.camera, cameraNonce: s.cameraNonce + 1 })),
+    setStoryReady: () => set({ storyReady: true }),
     notify: (msg) => {
       clearTimeout(toastTimer)
       set({ toast: msg })

@@ -6,6 +6,31 @@ This is an independent, interactive 3D configuration studio for the BMW M340i (G
 
 > Not affiliated with BMW AG or CarWale. The car is a **procedural prototype**. It is built from the published overall dimensions (4,713 × 1,827 × 1,440 mm, 2,851 mm wheelbase), not from BMW CAD data or a scanned model.
 
+## The showroom
+
+The page opens as a cinematic, scroll-driven showroom. The configurator sits below it.
+
+- **Opening sequence:** a black screen, an abstract insignia (not a BMW mark), a technical read-out and a sound-wave graphic. Then a light shaft brings the car up from black. The sequence can be skipped, runs once per session, and lasts only as long as the scene takes to load (about 1.7 s at minimum, 9 s at most).
+- **Hero:** "Engineered to be felt." with *Explore the machine* and *Enter the configurator*.
+- **Six scenes, one persistent 3D canvas:**
+  1. The Machine (front three-quarter to side profile)
+  2. Sculpted by aerodynamics (grille, lamps, contours, wheels and rear, with light streaks and coordinate callouts)
+  3. Performance DNA (technical x-ray with the bonnet up, then animated counters)
+  4. The Cockpit (the roof and glass lift off for a cutaway)
+  5. Choose your atmosphere: Midnight Studio, Neon District or Performance Circuit (procedural scenery with animated start lights)
+  6. Final reveal: "Built for the moment before the launch."
+- **How it works:** the camera holds on each shot while its text is on screen, then eases to the next one. The frame shifts so the car stays clear of the text, and on portrait screens the car moves up. Dragging sideways orbits the car while vertical swipes still scroll. The showroom controls let you switch environment, pause the turntable, toggle light effects and reset the view.
+- **Site-wide:** a navigation bar with a sliding active indicator, and a Sport mode that turns the blue accent red in the UI and in the scene. Ambient sound is muted by default and synthesised with Web Audio, so there are no audio files. There is also a progress rail, a trailing cursor ring on desktop, magnetic CTAs, card tilt, masked text reveals and counters.
+- **In the configurator:** a Studio / Night / Track switch (scenic environments set their own light), a *Presentation* camera that cuts between framed shots until you drag, and everything from before.
+- **Performance:**
+  - Both canvases stop drawing when they are off screen.
+  - The showroom is lazy-loaded.
+  - Phones get a lower pixel ratio, no reflections and no bloom.
+  - Reduced motion skips the camera easing, the turntable and the reveals.
+  - Without WebGL, the showroom shows `public/showroom-fallback.jpg`, a still render of this procedural model.
+- **Libraries:** no new dependencies. Scroll choreography is a small hand-written controller in `ui/site/Story.tsx` and `lib/story.ts`, not GSAP.
+- **Figures:** the story's figures are 0–100 km/h 4.4 s (manufacturer claim, as given in the brief), 2,998 cc, six cylinders and eight speeds. Power and torque differ by market, so they appear only in the specification table and are labelled unverified there.
+
 ## Run it
 
 ```bash
@@ -54,6 +79,12 @@ src/
   viewer/CameraRig.tsx   camera presets and transitions
   viewer/lighting.ts     lighting presets
   viewer/car/            procedural model: geometry, body, front, rear, side, interior, wheels, materials, selectable Part
+  lib/story.ts           story beats, camera shots, copy, figures
+  lib/audio.ts           synthesised ambience, whoosh and rev (Web Audio)
+  viewer/StoryScene.tsx  showroom canvas: scroll camera, light shaft reveal, streaks
+  viewer/Studio.tsx      shared lights, reflections, floor
+  viewer/Scenery.tsx     Midnight Studio, Neon District and Performance Circuit scenery
+  ui/site/               loading screen, navigation, story sections, micro-interactions
   ui/                    stage HUD, option panel, thumbnails, sections
 scripts/                 screenshot and e2e helpers (playwright-core)
 ```

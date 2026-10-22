@@ -3,11 +3,12 @@ import { COMPONENT_LABELS, diffFromStock, paintOf, rimOf, wheelOf, type ViewMode
 import { sceneBridge, useConfigurator } from '../store/configurator'
 import { CAMERA_PRESETS } from '../viewer/CameraRig'
 import { LIGHTING } from '../viewer/lighting'
+import { EnvironmentSelector } from './site/Story'
 import { TourCard } from './Tour'
 
 const CarScene = lazy(() => import('../viewer/CarScene'))
 
-function hasWebGL(): boolean {
+export function hasWebGL(): boolean {
   try {
     const c = document.createElement('canvas')
     return !!(c.getContext('webgl2') || c.getContext('webgl'))
@@ -77,6 +78,19 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
   const setLightShow = useConfigurator((s) => s.setLightShow)
   const tour = useConfigurator((s) => s.tour)
   const setTour = useConfigurator((s) => s.setTour)
+  const environment = useConfigurator((s) => s.environment)
+  const presentation = useConfigurator((s) => s.presentation)
+  const setPresentation = useConfigurator((s) => s.setPresentation)
+  const [inView, setInView] = useState(false)
+
+  // stop drawing the configurator while it is off screen
+  useEffect(() => {
+    const el = stageRef.current
+    if (!el) return
+    const io = new IntersectionObserver(([e]) => setInView(e.isIntersecting), { rootMargin: '200px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
 
   const paint = paintOf(config)
   const changes = diffFromStock(config).length
@@ -126,7 +140,7 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
         {webgl ? (
           <SceneBoundary>
             <Suspense fallback={null}>
-              <CarScene reducedMotion={reducedMotion} />
+              <CarScene reducedMotion={reducedMotion} active={inView || !ready} />
             </Suspense>
           </SceneBoundary>
         ) : (
@@ -176,10 +190,17 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
         {viewMode === 'exploded' && !compare && <p className="mode-note">Separately modelled parts move apart. The doors and body sides are one piece and stay put.</p>}
       </div>
 
-      <div className="hud hud-tr" role="toolbar" aria-label="Viewer tools">
+      <div className="hud hud-tl2" role="group" aria-label="Environment and lighting">
+        <EnvironmentSelector compact />
         <label className="select">
           <span className="sr-only">Lighting</span>
-          <select value={lighting} onChange={(e) => setLighting(e.target.value as typeof lighting)} aria-label="Studio lighting">
+          <select
+            value={lighting}
+            onChange={(e) => setLighting(e.target.value as typeof lighting)}
+            aria-label="Studio lighting"
+            disabled={environment !== 'studio'}
+            title={environment !== 'studio' ? 'The Night and Track environments set their own light' : undefined}
+          >
             {LIGHTING.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.label}
@@ -187,8 +208,14 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
             ))}
           </select>
         </label>
+      </div>
+
+      <div className="hud hud-tr" role="toolbar" aria-label="Viewer tools">
         <button type="button" className={`btn small tour-btn${tour !== null ? ' is-on' : ''}`} onClick={() => setTour(tour === null ? 0 : null)} aria-pressed={tour !== null}>
           {tour === null ? 'Parts tour' : 'End tour'}
+        </button>
+        <button type="button" className={`btn small present-btn${presentation ? ' is-on' : ''}`} onClick={() => setPresentation(!presentation)} aria-pressed={presentation} title="Cinematic presentation camera. Drag to take over.">
+          {presentation ? 'Stop presentation' : 'Presentation'}
         </button>
         <button type="button" className={`icon-btn${lightShow ? ' is-on' : ''}`} onClick={() => setLightShow(!lightShow)} title="Light show" aria-pressed={lightShow}>
           ✦

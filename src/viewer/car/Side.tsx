@@ -79,11 +79,13 @@ export function SideParts({
   skirts,
   windowTrim,
   vents,
+  cutaway = false,
 }: {
   mirrorCaps: MirrorCapId
   skirts: SkirtId
   windowTrim: WindowTrimId
   vents: VentId
+  cutaway?: boolean
 }) {
   const m = useMat()
   const mg = mirrorGeometry()
@@ -162,7 +164,7 @@ export function SideParts({
         {[1, -1].map((s) => (
           <group key={s} scale={s === 1 ? undefined : MIRROR_Z}>
             <mesh geometry={wt.belt} material={trimMat} />
-            <mesh geometry={wt.top} material={trimMat} />
+            {!cutaway && <mesh geometry={wt.top} material={trimMat} />}
           </group>
         ))}
       </Part>

@@ -21,6 +21,8 @@ interface Props {
   reducedMotion: boolean
   /** render layer, used by the stock/custom split view */
   layer?: number
+  /** lift the roof and glass off to show the cabin */
+  cutaway?: boolean
 }
 
 const WHEELS: { pos: [number, number, number]; mirrored: boolean; front: boolean }[] = [
@@ -30,7 +32,7 @@ const WHEELS: { pos: [number, number, number]; mirrored: boolean; front: boolean
   { pos: [AXLE_REAR, TYRE_RADIUS, -TRACK_HALF], mirrored: true, front: false },
 ]
 
-export function CarModel({ config, mode, interactive, hoodOpen, reducedMotion, layer = 0 }: Props) {
+export function CarModel({ config, mode, interactive, hoodOpen, reducedMotion, layer = 0, cutaway = false }: Props) {
   const materials = useCarMaterials(config, mode)
   const root = useRef<THREE.Group>(null)
   const body = useRef<THREE.Group>(null)
@@ -63,12 +65,12 @@ export function CarModel({ config, mode, interactive, hoodOpen, reducedMotion, l
       <CarMaterialsContext.Provider value={materials}>
         <group ref={root}>
           <group ref={body}>
-            <BodyShell accent={config.sideAccent} roof={config.roof} />
+            <BodyShell accent={config.sideAccent} roof={config.roof} cutaway={cutaway} />
             <Hood open={hoodOpen || exploded} variant={config.hood} />
             <EngineBay />
             <FrontEnd grille={config.grille} splitter={config.splitter} accent={config.frontAccent} />
             <RearEnd diffuser={config.diffuser} spoiler={config.spoiler} trim={config.rearTrim} layout={config.exhaustLayout} />
-            <SideParts mirrorCaps={config.mirrorCaps} skirts={config.skirts} windowTrim={config.windowTrim} vents={config.vents} />
+            <SideParts mirrorCaps={config.mirrorCaps} skirts={config.skirts} windowTrim={config.windowTrim} vents={config.vents} cutaway={cutaway} />
             <Interior />
           </group>
           {interactive && <LightShow />}
