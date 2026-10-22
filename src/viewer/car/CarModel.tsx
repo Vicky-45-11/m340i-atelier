@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber'
-import { useMemo, useRef, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 import * as THREE from 'three'
 import { rideOf, rimOf, wheelOf, type Configuration, type ViewMode } from '../../lib/configuration'
 import { BodyShell, Hood } from './Body'
@@ -35,12 +35,18 @@ const WHEELS: { pos: [number, number, number]; mirrored: boolean; front: boolean
 export function CarModel({ config, mode, interactive, hoodOpen, reducedMotion, layer = 0, cutaway = false }: Props) {
   const materials = useCarMaterials(config, mode)
   const root = useRef<THREE.Group>(null)
+  const tick = useRef(0)
   const body = useRef<THREE.Group>(null)
   const exploded = mode === 'exploded'
   const ctx = useMemo<CarContextValue>(() => ({ interactive, exploded, reducedMotion }), [interactive, exploded, reducedMotion])
   const wheelGeo = useWheelGeometry(wheelOf(config), rimOf(config).inches)
   const drop = rideOf(config).drop
   const letteringMat = useLettering(wheelGeo.letteringRatio)
+
+  // new parts must get their layer and shadow flags straight away
+  useEffect(() => {
+    tick.current = 0
+  }, [config, mode, hoodOpen, cutaway, layer])
 
   useFrame((_, dt) => {
     const r = root.current
@@ -49,6 +55,8 @@ export function CarModel({ config, mode, interactive, hoodOpen, reducedMotion, l
       const y = body.current.position.y
       body.current.position.y = reducedMotion ? -drop : THREE.MathUtils.lerp(y, -drop, 1 - Math.exp(-dt * 6))
     }
+    // walking ~300 meshes every frame is wasteful; options change rarely
+    if (tick.current++ % 15 !== 0) return
     r.traverse((o) => {
       if (o.layers.mask !== 1 << layer) o.layers.set(layer)
       if ((o as THREE.Mesh).isMesh && !o.userData.overlay) {

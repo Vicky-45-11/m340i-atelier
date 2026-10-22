@@ -15,7 +15,11 @@ async function open(viewport, path = '') {
   await page.goto(url + path, { waitUntil: 'domcontentloaded', timeout: 60000 })
   const introSeen = await page.waitForSelector('.intro >> text=Skip intro', { timeout: 10000 }).then(() => true, () => false)
   await page.waitForSelector('canvas', { timeout: 60000 })
-  await page.waitForFunction(() => window.__atelier?.getState().sceneReady, null, { timeout: 60000 })
+  // the configurator canvas mounts a moment after the intro, or when scrolled to
+  await page.waitForFunction(() => window.__atelier?.getState().introDone, null, { timeout: 60000 }).catch(() => {})
+  await page.evaluate(() => document.getElementById('configure')?.scrollIntoView({ behavior: 'instant' }))
+  await page.waitForFunction(() => window.__atelier?.getState().sceneReady, null, { timeout: 90000 })
+  await page.evaluate(() => window.scrollTo(0, 0))
   return { ctx, page, introSeen }
 }
 const st = (page, expr) => page.evaluate(`(() => { const s = __atelier.getState(); return ${expr} })()`)
@@ -37,7 +41,7 @@ const paintColor = (page) => page.evaluate(() => {
 
   // showroom story
   check('hero headline', (await page.locator('.hero-title .sr-only').allTextContents()).join(' ') === 'Engineered to be felt.')
-  check('showroom and configurator each have a canvas', (await page.locator('canvas').count()) === 2)
+  check('showroom has a canvas', (await page.locator('canvas').count()) >= 1)
   await page.waitForFunction(() => window.__atelier.getState().storyReady, null, { timeout: 60000 })
   check('showroom scene reports ready', true)
   await page.click('.hero >> text=Explore the machine')
@@ -62,6 +66,30 @@ const paintColor = (page) => page.evaluate(() => {
   check('sound toggle is muted by default and turns on', (await st(page, 's.sound')) && (await page.getAttribute('.sound-toggle', 'aria-pressed')) === 'true')
   await page.click('.sound-toggle')
   check('sound turns off again', !(await st(page, 's.sound')))
+
+  // showroom extras: paint dock, keyboard, launch game
+  await page.click('.dock-swatch[aria-label="Toronto Red Metallic"]')
+  check('paint dock changes the build', (await st(page, 's.config.paint')) === 'torontoRed')
+  await page.click('.dock-swatch[aria-label="Portimao Blue Metallic"]')
+  await page.keyboard.press('e')
+  check('E cycles the environment', (await st(page, 's.environment')) !== 'track')
+  await page.keyboard.press('3')
+  const jumped = await page.waitForFunction(() => Math.abs(document.getElementById('performance').getBoundingClientRect().top) < 140, null, { timeout: 20000 }).then(() => true, () => false)
+  check('number keys jump to a scene', jumped)
+  await page.evaluate(() => document.getElementById('finale').scrollIntoView({ block: 'center', behavior: 'instant' }))
+  await page.waitForSelector('.launch-btn')
+  const lb = await page.locator('.launch-btn').boundingBox()
+  await page.mouse.move(lb.x + lb.width / 2, lb.y + lb.height / 2)
+  await page.mouse.down()
+  await page.waitForTimeout(900)
+  await page.mouse.up()
+  check('releasing early is a false start', await page.isVisible('.launch.is-false'))
+  await page.mouse.down()
+  const went = await page.waitForSelector('.launch.is-go', { timeout: 20000 }).then(() => true, () => false)
+  await page.mouse.up()
+  check('lights out, then release gives a reaction time', went && (await page.isVisible('.launch.is-result')) && /\d+ ms/.test(await page.textContent('.launch-out')))
+  const spun = await page.waitForFunction(() => import('/src/viewer/storyRig.ts').then((m) => m.storyRig.wheelSpeed > 5), null, { timeout: 5000 }).then(() => true, () => false)
+  check('launch spins the wheels', spun)
 
   // configurator
   await page.evaluate(() => document.getElementById('configure').scrollIntoView({ behavior: 'instant' }))

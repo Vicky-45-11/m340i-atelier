@@ -1,9 +1,11 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { rev, whoosh } from '../../lib/audio'
+import { PAINTS } from '../../lib/configuration'
 import { BEATS, COCKPIT_POINTS, cameraBlend, DESIGN_NOTES, ENVIRONMENT_INFO, PERFORMANCE_FIGURES, SCENES } from '../../lib/story'
 import { useConfigurator, type EnvironmentId } from '../../store/configurator'
 import { storyRig } from '../../viewer/storyRig'
 import { Counter, SplitWords } from './Interactions'
+import { LaunchControl } from './Launch'
 
 const StoryScene = lazy(() => import('../../viewer/StoryScene'))
 
@@ -94,6 +96,22 @@ function EnvironmentSelector({ compact = false }: { compact?: boolean }) {
 }
 export { EnvironmentSelector }
 
+/** Swap the paint on the car in the showroom. It is the same build the configurator edits. */
+function PaintDock() {
+  const paint = useConfigurator((s) => s.config.paint)
+  const setOption = useConfigurator((s) => s.setOption)
+  return (
+    <div className="story-dock" role="radiogroup" aria-label="Paint">
+      {PAINTS.filter((p) => p.id !== 'custom').map((p) => (
+        <button key={p.id} type="button" role="radio" aria-checked={paint === p.id} aria-label={p.label} title={p.label} className={`dock-swatch${paint === p.id ? ' is-active' : ''}`} style={{ background: p.color }} onClick={() => setOption('paint', p.id)} />
+      ))}
+      <span className="key-hint" aria-hidden>
+        1–6 scenes · E world · P pause
+      </span>
+    </div>
+  )
+}
+
 function SceneRail({ beat }: { beat: number }) {
   const scene = BEATS[beat].scene
   return (
@@ -143,6 +161,32 @@ export function StoryExperience({ reducedMotion, webgl }: { reducedMotion: boole
   const setCategory = useConfigurator((s) => s.setCategory)
   const sound = useConfigurator((s) => s.sound)
   const lastScene = useRef(1)
+  const setEnvironment = useConfigurator((s) => s.setEnvironment)
+
+  // pointer position leans the camera; keys jump between scenes
+  useEffect(() => {
+    const move = (e: PointerEvent) => {
+      storyRig.pointer.x = (e.clientX / window.innerWidth) * 2 - 1
+      storyRig.pointer.y = (e.clientY / window.innerHeight) * 2 - 1
+    }
+    const key = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (e.ctrlKey || e.metaKey || e.altKey || (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return
+      const n = Number(e.key)
+      if (n >= 1 && n <= SCENES.length) scrollToId(SCENES[n - 1].id === 'finale' ? 'finale' : SCENES[n - 1].id)
+      else if (e.key.toLowerCase() === 'e') {
+        const order: EnvironmentId[] = ['studio', 'night', 'track']
+        const cur = useConfigurator.getState().environment
+        setEnvironment(order[(order.indexOf(cur) + 1) % order.length])
+      } else if (e.key.toLowerCase() === 'p') setSpin((v) => !v)
+    }
+    window.addEventListener('pointermove', move, { passive: true })
+    window.addEventListener('keydown', key)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('keydown', key)
+    }
+  }, [setEnvironment])
 
   // only draw the showroom while it is on screen
   useEffect(() => {
@@ -179,6 +223,7 @@ export function StoryExperience({ reducedMotion, webgl }: { reducedMotion: boole
         )}
         <div className="story-shade" aria-hidden />
         <SceneRail beat={beat} />
+        <PaintDock />
         <div className="story-hud" role="toolbar" aria-label="Showroom controls">
           <EnvironmentSelector compact />
           <button type="button" className={`icon-btn${spin ? ' is-on' : ''}`} onClick={() => setSpin(!spin)} aria-pressed={spin} title={spin ? 'Pause rotation' : 'Resume rotation'}>
@@ -371,6 +416,7 @@ export function StoryExperience({ reducedMotion, webgl }: { reducedMotion: boole
             >
               Experience the M340i
             </button>
+            <LaunchControl reducedMotion={reducedMotion} />
           </div>
         </div>
       </div>

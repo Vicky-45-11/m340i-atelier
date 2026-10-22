@@ -82,6 +82,16 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
   const presentation = useConfigurator((s) => s.presentation)
   const setPresentation = useConfigurator((s) => s.setPresentation)
   const [inView, setInView] = useState(false)
+  const introDone = useConfigurator((s) => s.introDone)
+  // build the configurator scene only once the showroom has had the GPU to itself
+  const [mount, setMount] = useState(false)
+  useEffect(() => {
+    if (mount) return
+    if (inView) return setMount(true)
+    if (!introDone) return
+    const t = setTimeout(() => setMount(true), 2500)
+    return () => clearTimeout(t)
+  }, [inView, introDone, mount])
 
   // stop drawing the configurator while it is off screen
   useEffect(() => {
@@ -138,17 +148,19 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
     <div className={`stage${fullscreen ? ' is-fullscreen' : ''} mode-${viewMode}`} ref={stageRef} onPointerDown={() => setDragged(true)}>
       <div className="viewport">
         {webgl ? (
-          <SceneBoundary>
-            <Suspense fallback={null}>
-              <CarScene reducedMotion={reducedMotion} active={inView || !ready} />
-            </Suspense>
-          </SceneBoundary>
+          mount && (
+            <SceneBoundary>
+              <Suspense fallback={null}>
+                <CarScene reducedMotion={reducedMotion} active={inView || !ready} />
+              </Suspense>
+            </SceneBoundary>
+          )
         ) : (
           <Fallback reason="WebGL is not available on this device or is turned off." />
         )}
       </div>
 
-      {webgl && !ready && (
+      {webgl && mount && !ready && (
         <div className="loader" role="status">
           <span className="loader-bar" />
           <span>Building the studio and procedural model…</span>

@@ -2890,3 +2890,117 @@ html.is-locked body {
     margin-left: auto;
   }
 }
+
+/* ---------- paint dock, launch game ---------- */
+.story-dock {
+  position: absolute;
+  left: 24px;
+  bottom: 22px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.8s ease 1.4s;
+}
+.story.is-live .story-dock {
+  opacity: 1;
+}
+.dock-swatch {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid rgba(233, 236, 240, 0.35);
+  border-radius: 50%;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.3s;
+}
+.dock-swatch:hover {
+  transform: scale(1.25);
+}
+.dock-swatch.is-active {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(5, 6, 7, 0.9), 0 0 0 4px var(--accent);
+}
+.key-hint {
+  margin-left: 10px;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.launch {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  margin-top: 36px;
+  padding: 22px 26px 18px;
+  border: 1px solid var(--line);
+  background: rgba(6, 8, 11, 0.7);
+  backdrop-filter: blur(10px);
+  user-select: none;
+  touch-action: none;
+}
+.launch-eyebrow,
+.launch-out {
+  margin: 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.launch-out strong {
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+.launch.is-go .launch-out strong {
+  color: #38e08a;
+}
+.launch.is-false .launch-out strong {
+  color: #ff5563;
+}
+.launch-lights {
+  display: flex;
+  gap: 10px;
+}
+.launch-lights span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #1a0b0e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  transition: background 0.08s, box-shadow 0.08s;
+}
+.launch-lights span.is-lit {
+  background: #ff2433;
+  box-shadow: 0 0 18px 4px rgba(255, 36, 51, 0.7);
+}
+.launch.is-go .launch-lights span {
+  background: #12281c;
+}
+.launch-btn {
+  min-width: 260px;
+}
+.launch.is-lights .launch-btn,
+.launch.is-go .launch-btn {
+  transform: scale(0.97);
+}
+@media (max-width: 760px) {
+  .story-dock {
+    left: 16px;
+    bottom: 62px;
+  }
+  .key-hint {
+    display: none;
+  }
+  .launch {
+    padding: 16px;
+  }
+  .launch-btn {
+    min-width: 0;
+    width: 100%;
+  }
+}

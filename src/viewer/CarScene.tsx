@@ -1,7 +1,7 @@
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls, PerformanceMonitor } from '@react-three/drei'
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { STOCK_CONFIG } from '../lib/configuration'
 import { sceneBridge, useConfigurator } from '../store/configurator'
@@ -69,6 +69,8 @@ export default function CarScene({ reducedMotion, active = true }: { reducedMoti
   const presentation = useConfigurator((s) => s.presentation)
   const mobile = useIsMobile()
   const preset = presetFor(environment, lighting)
+  // steps down if frames run long: 2 full, 1 lighter, 0 lowest
+  const [quality, setQuality] = useState(mobile ? 0 : 2)
   const hoodOpen = camera === 'engine'
 
   return (
@@ -76,7 +78,7 @@ export default function CarScene({ reducedMotion, active = true }: { reducedMoti
       // stop drawing while the configurator is scrolled out of view
       frameloop={active ? 'always' : 'never'}
       shadows
-      dpr={mobile ? [1, 1.5] : [1, 2]}
+      dpr={quality === 2 ? (mobile ? [1, 1.5] : [1, 2]) : quality === 1 ? [1, 1.25] : 1}
       gl={{ antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: false }}
       camera={{ position: [7.2, 1.4, 4.5], fov: 34, near: 0.04, far: 80 }}
       onCreated={({ gl }) => {
@@ -99,8 +101,8 @@ export default function CarScene({ reducedMotion, active = true }: { reducedMoti
         />
         {compare && <CarModel config={STOCK_CONFIG} mode="studio" interactive={false} hoodOpen={false} reducedMotion={reducedMotion} layer={1} />}
         {compare && <SplitRenderer />}
-        {!compare && !mobile && (
-          <EffectComposer multisampling={4}>
+        {!compare && !mobile && quality > 0 && (
+          <EffectComposer multisampling={quality === 2 ? 4 : 0}>
             <Bloom luminanceThreshold={1} luminanceSmoothing={0.2} intensity={0.85} mipmapBlur />
             <Vignette offset={0.25} darkness={0.55} />
           </EffectComposer>
@@ -118,6 +120,7 @@ export default function CarScene({ reducedMotion, active = true }: { reducedMoti
         enablePan
         screenSpacePanning
       />
+      <PerformanceMonitor flipflops={3} onDecline={() => setQuality((q) => Math.max(0, q - 1))} onFallback={() => setQuality(0)} />
       <CameraRig reducedMotion={reducedMotion} intro={!introDone} />
       <Bridge />
     </Canvas>

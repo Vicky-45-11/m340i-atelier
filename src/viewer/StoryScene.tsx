@@ -1,6 +1,7 @@
 import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
+import { PerformanceMonitor } from '@react-three/drei'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { Suspense, useEffect, useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { BEATS, cameraBlend } from '../lib/story'
 import { useConfigurator, type EnvironmentId } from '../store/configurator'
@@ -29,10 +30,15 @@ function StoryCamera({ reducedMotion, spin }: { reducedMotion: boolean; spin: bo
   const spinAngle = useRef(0)
   const placed = useRef(false)
   const frame = useRef(new THREE.Vector2())
+  const smoothP = useRef(0)
+  const pointer = useRef(new THREE.Vector2())
+  const shake = useRef(0)
 
   useFrame((_, rawDt) => {
     const dt = Math.min(rawDt, 0.1)
-    const { i, e, nearest } = cameraBlend(storyRig.progress)
+    // critically damped scroll: wheel notches become a glide instead of a jump
+    smoothP.current = reducedMotion ? storyRig.progress : THREE.MathUtils.damp(smoothP.current, storyRig.progress, 7, dt)
+    const { i, e, nearest } = cameraBlend(smoothP.current)
     const a = BEATS[i].camera
     const b = BEATS[i + 1].camera
     goalPos.copy(vA.set(...a.position)).lerp(vB.set(...b.position), e)
@@ -57,12 +63,22 @@ function StoryCamera({ reducedMotion, spin }: { reducedMotion: boolean; spin: bo
       storyRig.yaw += storyRig.yawVelocity
       storyRig.yawVelocity *= Math.exp(-dt * 4)
     }
-    const yaw = storyRig.yaw + spinAngle.current
+    pointer.current.x = THREE.MathUtils.damp(pointer.current.x, reducedMotion ? 0 : storyRig.pointer.x, 3, dt)
+    pointer.current.y = THREE.MathUtils.damp(pointer.current.y, reducedMotion ? 0 : storyRig.pointer.y, 3, dt)
+    // the mouse leans the camera a few degrees, so the scene feels deep rather than flat
+    const yaw = storyRig.yaw + spinAngle.current - pointer.current.x * 0.05
+    goalPos.y += -pointer.current.y * 0.07
     goalPos.applyAxisAngle(AXIS_Y, yaw)
     goalTarget.applyAxisAngle(AXIS_Y, yaw)
 
     const k = reducedMotion || !placed.current ? 1 : 1 - Math.exp(-dt * 4.5)
     placed.current = true
+    // engine load shakes the camera a little
+    shake.current = THREE.MathUtils.damp(shake.current, reducedMotion ? 0 : storyRig.rev, 8, dt)
+    if (shake.current > 0.02) {
+      goalPos.x += (Math.random() - 0.5) * 0.02 * shake.current
+      goalPos.y += (Math.random() - 0.5) * 0.015 * shake.current
+    }
     camera.position.lerp(goalPos, k)
     target.current.lerp(goalTarget, k)
     camera.fov = THREE.MathUtils.lerp(camera.fov, aspect < 1 ? fov * 1.12 : fov, k)
@@ -246,12 +262,14 @@ export default function StoryScene({ reducedMotion, active, beat, effects, spin,
   const preset = presetFor(environment, 'darkStudio')
   const accent = sport ? ACCENT.red : ACCENT.blue
   const strength = useRef(0)
+  // 2 = full, 1 = lighter, 0 = lowest. The monitor steps this down if frames run long.
+  const [quality, setQuality] = useState(mobile ? 0 : 2)
 
   return (
     <Canvas
       frameloop={active ? 'always' : 'never'}
       shadows
-      dpr={mobile ? [1, 1.25] : [1, 1.75]}
+      dpr={quality === 2 ? [1, 1.75] : quality === 1 ? [1, 1.25] : 1}
       gl={{ antialias: true, powerPreference: 'high-performance' }}
       camera={{ position: [5.4, 0.62, 4.3], fov: 30, near: 0.04, far: 120 }}
       onCreated={({ gl }) => {
@@ -265,13 +283,14 @@ export default function StoryScene({ reducedMotion, active, beat, effects, spin,
         <CarModel config={config} mode={b.technical ? 'technical' : 'studio'} interactive={false} hoodOpen={!!b.hoodOpen} cutaway={!!b.cutaway} reducedMotion={reducedMotion} />
         {effects && environment === 'studio' && <VolumetricLight strength={strength} accent={accent} />}
         <LightStreaks on={effects && !!b.streaks && !reducedMotion} accent={accent} />
-        {!mobile && (
-          <EffectComposer multisampling={4}>
+        {quality > 0 && !mobile && (
+          <EffectComposer multisampling={quality === 2 ? 4 : 0}>
             <Bloom luminanceThreshold={1} luminanceSmoothing={0.2} intensity={effects ? 0.9 : 0.4} mipmapBlur />
             <Vignette offset={0.2} darkness={0.7} />
           </EffectComposer>
         )}
       </Suspense>
+      <PerformanceMonitor flipflops={3} onDecline={() => setQuality((q) => Math.max(0, q - 1))} onFallback={() => setQuality(0)} />
       <StoryCamera reducedMotion={reducedMotion} spin={spin} />
       <Reveal exposure={preset.exposure} strength={strength} reducedMotion={reducedMotion} />
       <Ready />

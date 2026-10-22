@@ -1,7 +1,9 @@
-import { useEffect, useMemo } from 'react'
+import { useFrame } from '@react-three/fiber'
+import { useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
 import type { WheelStyle } from '../../lib/configuration'
 import { TYRE_RADIUS, TYRE_WIDTH } from './geometry'
+import { storyRig } from '../storyRig'
 import { tyreLetteringTexture, useMat } from './materials'
 
 // One procedural wheel assembly: tyre, rim barrel, spokes, hub, brake disc
@@ -206,8 +208,14 @@ export function Wheel({
   lettering: THREE.Material | null
 }) {
   const m = useMat()
+  const spin = useRef<THREE.Group>(null)
+  useFrame((_, dt) => {
+    // the launch game spins the wheels; the caliper stays put
+    if (spin.current && storyRig.wheelSpeed !== 0) spin.current.rotation.z -= storyRig.wheelSpeed * Math.min(dt, 0.05)
+  })
   return (
     <group position={position} scale={[1, 1, mirrored ? -1 : 1]}>
+      <group ref={spin}>
       <mesh geometry={geo.tyre} material={m.get('rubber')} />
       <mesh geometry={geo.barrel} material={m.get('rim')} />
       <mesh geometry={geo.lip} material={m.get('rim')} />
@@ -227,6 +235,7 @@ export function Wheel({
       {drilled && <mesh geometry={geo.discFace} material={m.get('discFace')} />}
       {lettering && <mesh geometry={geo.lettering} material={lettering} scale={mirrored ? [-1, 1, 1] : undefined} />}
       <mesh geometry={geo.hat} material={m.get('disc')} />
+      </group>
       {/* caliper sits behind the axle, upper rear quadrant; it does not mirror front-to-back */}
       <mesh geometry={geo.caliper} material={m.get('caliper')} />
     </group>
