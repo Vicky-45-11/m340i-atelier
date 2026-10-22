@@ -52,6 +52,7 @@ export type MatKey =
   | 'stripeRed'
   | 'honeycomb'
   | 'plate'
+  | 'discFace'
   | 'plateRear'
 
 export type FinishMaterial = 'paint' | 'glossBlack' | 'carbon' | 'chrome' | 'matteBlack'
@@ -117,6 +118,81 @@ function getHoneycombTexture(): THREE.CanvasTexture | null {
   honeycombTexture.repeat.set(26, 5)
   honeycombTexture.colorSpace = THREE.SRGBColorSpace
   return honeycombTexture
+}
+
+function drilledDiscTexture(): THREE.CanvasTexture | null {
+  if (typeof document === 'undefined') return null
+  const c = document.createElement('canvas')
+  c.width = c.height = 256
+  const g = c.getContext('2d')
+  if (!g) return null
+  const grad = g.createRadialGradient(128, 128, 20, 128, 128, 128)
+  grad.addColorStop(0, '#6c7077')
+  grad.addColorStop(1, '#5a5e65')
+  g.fillStyle = grad
+  g.fillRect(0, 0, 256, 256)
+  // concentric machining marks
+  g.strokeStyle = 'rgba(255,255,255,0.05)'
+  for (let r = 40; r < 128; r += 3) {
+    g.beginPath()
+    g.arc(128, 128, r, 0, Math.PI * 2)
+    g.stroke()
+  }
+  // cross-drilled holes in staggered rows, plus curved slots
+  g.fillStyle = '#121315'
+  for (let i = 0; i < 36; i++) {
+    const a = (i / 36) * Math.PI * 2
+    for (const [r, off] of [[78, 0], [92, 0.5], [106, 0]] as const) {
+      const aa = a + (off * Math.PI * 2) / 36
+      g.beginPath()
+      g.arc(128 + Math.cos(aa) * r, 128 + Math.sin(aa) * r, 3.2, 0, Math.PI * 2)
+      g.fill()
+    }
+  }
+  g.strokeStyle = '#1c1d20'
+  g.lineWidth = 2.4
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 + 0.12
+    g.beginPath()
+    g.arc(128, 128, 115, a, a + 0.22)
+    g.stroke()
+  }
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  t.anisotropy = 4
+  return t
+}
+
+/** Sidewall lettering laid out around a circle; the ring geometry maps the texture across its outer diameter */
+export function tyreLetteringTexture(innerRatio: number): THREE.CanvasTexture | null {
+  if (typeof document === 'undefined') return null
+  const c = document.createElement('canvas')
+  c.width = c.height = 1024
+  const g = c.getContext('2d')
+  if (!g) return null
+  g.clearRect(0, 0, 1024, 1024)
+  const r = 512 * (innerRatio + (1 - innerRatio) * 0.52)
+  g.fillStyle = '#d9dde2'
+  g.font = '700 46px "Inter Tight", system-ui, sans-serif'
+  g.textAlign = 'center'
+  g.textBaseline = 'middle'
+  const words = ['ATELIER', 'PERFORMANCE', 'ATELIER', 'PERFORMANCE']
+  words.forEach((word, wi) => {
+    const centre = (wi / words.length) * Math.PI * 2 - Math.PI / 2
+    const spacing = 0.05
+    const start = centre - ((word.length - 1) * spacing) / 2
+    for (let i = 0; i < word.length; i++) {
+      const a = start + i * spacing
+      g.save()
+      g.translate(512 + Math.cos(a) * r, 512 + Math.sin(a) * r)
+      g.rotate(a + Math.PI / 2)
+      g.fillText(word[i], 0, 0)
+      g.restore()
+    }
+  })
+  const t = new THREE.CanvasTexture(c)
+  t.colorSpace = THREE.SRGBColorSpace
+  return t
 }
 
 function plateTexture(mirror: boolean): THREE.CanvasTexture | null {
@@ -185,6 +261,7 @@ function createMaterials(): Record<MatKey, THREE.Material> {
     stripeBlue: std({ color: '#5fa8ff', metalness: 0.2, roughness: 0.4 }),
     stripeDark: std({ color: '#1c3f9e', metalness: 0.2, roughness: 0.4 }),
     stripeRed: std({ color: '#d4202f', metalness: 0.2, roughness: 0.4 }),
+    discFace: std({ color: '#ffffff', map: drilledDiscTexture(), metalness: 0.85, roughness: 0.42 }),
     plate: std({ color: '#ffffff', map: plateTexture(true), roughness: 0.4, metalness: 0, side: THREE.DoubleSide }),
     plateRear: std({ color: '#ffffff', map: plateTexture(false), roughness: 0.4, metalness: 0, side: THREE.DoubleSide }),
     honeycomb: std({ color: '#ffffff', map: getHoneycombTexture(), metalness: 0.6, roughness: 0.35, side: THREE.DoubleSide }),

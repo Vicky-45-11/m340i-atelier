@@ -1,7 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useContext, useRef, type ReactNode } from 'react'
 import * as THREE from 'three'
-import type { SideAccentId } from '../../lib/configuration'
+import { ROOFS, finishOf, type HoodId, type RoofId, type SideAccentId } from '../../lib/configuration'
 import {
   ARCH_RADIUS,
   AXLE_FRONT,
@@ -15,6 +15,7 @@ import {
   bodyHalfWidth,
   bodyStations,
   greenhousePoint,
+  gridSurface,
   lidSection,
   loft,
   openSection,
@@ -23,6 +24,7 @@ import {
   shutLine,
   sideRibbon,
   stations,
+  surfaceY,
   surfaceZ,
   tubeAlong,
 } from './geometry'
@@ -116,8 +118,21 @@ const linerGeometry = once(() => {
 
 const MIRROR_Z: [number, number, number] = [1, 1, -1]
 
+const finFin = once(() => {
+  const sh = new THREE.Shape()
+  sh.moveTo(0.075, 0)
+  sh.quadraticCurveTo(0.0, 0.02, -0.055, 0.062)
+  sh.lineTo(-0.085, 0.058)
+  sh.quadraticCurveTo(-0.095, 0.03, -0.095, 0)
+  sh.closePath()
+  const g = new THREE.ExtrudeGeometry(sh, { depth: 0.03, bevelEnabled: true, bevelSize: 0.008, bevelThickness: 0.01, bevelSegments: 3, curveSegments: 10 })
+  g.translate(0, 0, -0.015)
+  return g
+})
+const FIN_X = -0.98
+
 /** The painted shell, glass and fixed details. Paint never touches glass, rubber or trim. */
-export function BodyShell({ accent }: { accent: SideAccentId }) {
+export function BodyShell({ accent, roof }: { accent: SideAccentId; roof: RoofId }) {
   const m = useMat()
   const shell = shellGeometry()
   const gh = greenhouseGeometry()
@@ -125,6 +140,8 @@ export function BodyShell({ accent }: { accent: SideAccentId }) {
   const acc = accentGeometry()
   const paint = m.get('paint')
   const cavity = m.get('cavity')
+  const roofMat = m.finish(finishOf(ROOFS, roof))
+  const finY = greenhousePoint(FIN_X, Math.PI / 2, 0.004)[0] - 0.004
   const handleZ = (x: number, y: number) => surfaceZ(x, y) + 0.006
 
   return (
@@ -141,9 +158,11 @@ export function BodyShell({ accent }: { accent: SideAccentId }) {
       {/* greenhouse: glass all round, painted roof and pillars over it */}
       <mesh geometry={gh.glass} material={m.get('glass')} renderOrder={2} />
       <mesh geometry={gh.headliner} material={m.get('headliner')} />
-      {[gh.railL, gh.railR, gh.roof, gh.cL, gh.cR].map((g, i) => (
+      {[gh.railL, gh.railR, gh.cL, gh.cR].map((g, i) => (
         <mesh key={i} geometry={g} material={paint} />
       ))}
+      <mesh geometry={gh.roof} material={roofMat} />
+      <mesh geometry={finFin()} position={[FIN_X, finY, 0]} material={roof === 'body' ? m.get('glossBlack') : roofMat} />
       {[gh.bL, gh.bR, gh.sailL, gh.sailR].map((g, i) => (
         <mesh key={i} geometry={g} material={m.get('glossBlack')} />
       ))}
@@ -193,8 +212,47 @@ export function RearBumperShell() {
   )
 }
 
+// Power dome: a smooth bump that fades into the bonnet at every edge
+const domeGeometry = once(() => {
+  const x0 = 1.0
+  const x1 = 1.98
+  return gridSurface(40, 30, (i, j) => {
+    const u = i / 40
+    const x = x0 + (x1 - x0) * u
+    const half = 0.32 - 0.1 * u
+    const v = -1 + (2 * j) / 30
+    const z = v * half
+    const h = 0.032 * Math.pow(Math.sin(Math.PI * Math.min(1, u * 1.15)), 0.6) * Math.pow(1 - v * v, 1.6)
+    return new THREE.Vector3(x, surfaceY(x, z) + 0.0025 + h, z)
+  })
+})
+const extractorGeometry = once(() => {
+  const vent = gridSurface(10, 10, (i, j) => {
+    const x = 1.46 + (0.3 * i) / 10
+    const z = 0.36 + (0.15 * j) / 10 - (i / 10) * 0.03
+    return new THREE.Vector3(x, surfaceY(x, z) + 0.006, z)
+  })
+  const rim: THREE.Vector3[] = []
+  const corners: [number, number][] = [
+    [1.46, 0.36],
+    [1.76, 0.33],
+    [1.76, 0.48],
+    [1.46, 0.51],
+  ]
+  for (let k = 0; k < 4; k++) {
+    const [ax, az] = corners[k]
+    const [bx, bz] = corners[(k + 1) % 4]
+    for (let t = 0; t < 1; t += 0.2) {
+      const x = ax + (bx - ax) * t
+      const z = az + (bz - az) * t
+      rim.push(new THREE.Vector3(x, surfaceY(x, z) + 0.007, z))
+    }
+  }
+  return { vent, rim: tubeAlong(rim, 0.006, true) }
+})
+
 /** Bonnet on a hinge at the windscreen base; opens for the engine-bay view and exploded mode */
-export function Hood({ open }: { open: boolean }) {
+export function Hood({ open, variant }: { open: boolean; variant: HoodId }) {
   const m = useMat()
   const shell = shellGeometry()
   const { reducedMotion } = useContext(CarContext)
@@ -215,8 +273,16 @@ export function Hood({ open }: { open: boolean }) {
       <group position={pivot}>
         <group ref={hinge}>
           <group position={[-pivot[0], -pivot[1], 0]}>
-            <mesh geometry={shell.hood} material={m.get('paint')} />
+            <mesh geometry={shell.hood} material={variant === 'vented' ? m.get('carbon') : m.get('paint')} />
             <mesh geometry={shell.hood} material={m.get('cavity')} />
+            {variant !== 'stock' && <mesh geometry={domeGeometry()} material={variant === 'vented' ? m.get('carbon') : m.get('paint')} />}
+            {variant === 'vented' &&
+              [1, -1].map((s) => (
+                <group key={s} scale={s === 1 ? undefined : MIRROR_Z}>
+                  <mesh geometry={extractorGeometry().vent} material={m.get('honeycomb')} />
+                  <mesh geometry={extractorGeometry().rim} material={m.get('glossBlack')} />
+                </group>
+              ))}
           </group>
         </group>
       </group>

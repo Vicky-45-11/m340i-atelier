@@ -1,4 +1,5 @@
-import { Environment, Lightformer, OrbitControls } from '@react-three/drei'
+import { Environment, Lightformer, MeshReflectorMaterial, OrbitControls } from '@react-three/drei'
+import { Bloom, EffectComposer, Vignette } from '@react-three/postprocessing'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Suspense, useEffect, useMemo, useRef } from 'react'
 import * as THREE from 'three'
@@ -72,7 +73,24 @@ function Studio({ preset, mobile }: { preset: LightingPreset; mobile: boolean })
       </Environment>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <circleGeometry args={[30, 64]} />
-        <meshStandardMaterial color={preset.floor} roughness={preset.floorRoughness} metalness={0.2} envMapIntensity={0.6} />
+        {mobile ? (
+          <meshStandardMaterial color={preset.floor} roughness={preset.floorRoughness} metalness={0.2} envMapIntensity={0.6} />
+        ) : (
+          // glossy studio floor with a soft, blurred reflection of the car
+          <MeshReflectorMaterial
+            color={preset.floor}
+            roughness={preset.floorRoughness + 0.25}
+            metalness={0.4}
+            blur={[400, 120]}
+            resolution={1024}
+            mixBlur={1}
+            mixStrength={preset.id === 'arctic' ? 1.2 : 2.4}
+            mirror={0}
+            depthScale={0.6}
+            minDepthThreshold={0.6}
+            maxDepthThreshold={1.3}
+          />
+        )}
       </mesh>
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.002, 0]} renderOrder={1}>
         <planeGeometry args={[6.2, 2.9]} />
@@ -168,6 +186,12 @@ export default function CarScene({ reducedMotion }: { reducedMotion: boolean }) 
         />
         {compare && <CarModel config={STOCK_CONFIG} mode="studio" interactive={false} hoodOpen={false} reducedMotion={reducedMotion} layer={1} />}
         {compare && <SplitRenderer />}
+        {!compare && !mobile && (
+          <EffectComposer multisampling={4}>
+            <Bloom luminanceThreshold={1} luminanceSmoothing={0.2} intensity={0.85} mipmapBlur />
+            <Vignette offset={0.25} darkness={0.55} />
+          </EffectComposer>
+        )}
       </Suspense>
       <OrbitControls
         makeDefault

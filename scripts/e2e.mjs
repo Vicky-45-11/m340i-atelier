@@ -100,6 +100,43 @@ const paintColor = (page) => page.evaluate(() => {
   await page.selectOption('select[aria-label="Studio lighting"]', 'sunset')
   check('lighting preset', (await st(page, 's.lighting')) === 'sunset')
 
+  // new component options
+  const m0 = await meshCount(page)
+  await page.click('.category:has-text("Front")')
+  await page.click('button.option:has-text("Carbon-look vented bonnet")')
+  check('vented bonnet applies', (await st(page, 's.config.hood')) === 'vented')
+  await page.click('.category:has-text("Side")')
+  await page.click('button.option:has-text("Carbon-look air breathers")')
+  await page.waitForTimeout(400)
+  check('wing vents add geometry', (await st(page, 's.config.vents')) === 'carbon' && (await meshCount(page)) > m0, `meshes ${m0} -> ${await meshCount(page)}`)
+  await page.click('.category:has-text("Rear")')
+  await page.click('button.option:has-text("Quad tips")')
+  check('quad exhaust applies', (await st(page, 's.config.exhaustLayout')) === 'quad')
+  await page.click('.category:has-text("Wheels")')
+  await page.click('button.option:has-text("Cross-drilled and slotted discs")')
+  await page.click('button.option:has-text("Raised-letter sidewall")')
+  check('discs and tyre lettering apply', (await st(page, 's.config.discs')) === 'drilled' && (await st(page, 's.config.tyres')) === 'lettered')
+
+  // isolate, tour, light show
+  await page.evaluate(() => window.__atelier.getState().select('wheels'))
+  await page.click('.pill-toggle')
+  const ghostCount = () => { let n = 0; window.__scene.traverse((o) => { if (o.isMesh && o.userData.origMaterial && o.material.opacity < 0.05) n++ }); return n }
+  const ghostedOn = await page.waitForFunction(`(${ghostCount})() > 50`, null, { timeout: 15000 }).then(() => true, () => false)
+  check('isolate ghosts the other parts', (await st(page, 's.isolate')) && ghostedOn)
+  await page.click('.pill button[aria-label="Clear selection"]')
+  const ghostedOff = await page.waitForFunction(`(${ghostCount})() === 0`, null, { timeout: 15000 }).then(() => true, () => false)
+  check('clearing selection restores materials', ghostedOff)
+  await page.click('.tour-btn')
+  check('parts tour starts on the grille', (await st(page, 's.tour')) === 0 && (await st(page, 's.selected')) === 'grille' && (await page.isVisible('.tour')))
+  await page.click('.tour button[aria-label="Next part"]')
+  check('tour next moves to headlights', (await st(page, 's.selected')) === 'headlights')
+  await page.keyboard.press('Escape')
+  check('Esc ends the tour', (await st(page, 's.tour')) === null && !(await page.isVisible('.tour')))
+  await page.click('button[title="Light show"]')
+  await page.waitForTimeout(1500)
+  check('light show turns on', await st(page, 's.lightShow'))
+  await page.click('button[title="Light show"]')
+
   // summary + persistence
   check('summary reflects paint', (await page.textContent('#summary')).includes('Toronto Red Metallic'))
   await page.fill('#build-name', 'Test build')

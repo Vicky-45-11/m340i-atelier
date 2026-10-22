@@ -30,6 +30,7 @@ export type ComponentId =
   | 'taillights'
   | 'interior'
   | 'engine'
+  | 'vents'
 
 export type CameraPresetId =
   | 'exterior'
@@ -113,6 +114,16 @@ export const RIM_SIZES: RimSize[] = [
   { id: 'r20', label: '20-inch, low profile', inches: 20, tier: 2, concept: true, note: 'Visual only. Fitment not verified.' },
 ]
 
+export type DiscId = 'plain' | 'drilled'
+export const DISCS: OptionBase<DiscId>[] = [
+  { id: 'plain', label: 'Plain discs', tier: 0 },
+  { id: 'drilled', label: 'Cross-drilled and slotted discs', tier: 2, concept: true },
+]
+export type TyreId = 'plain' | 'lettered'
+export const TYRES: OptionBase<TyreId>[] = [
+  { id: 'plain', label: 'Plain sidewall', tier: 0 },
+  { id: 'lettered', label: 'Raised-letter sidewall', tier: 1, concept: true, note: 'Shows our own ATELIER lettering, not a tyre brand.' },
+]
 export type CaliperId = 'mBlue' | 'red' | 'black' | 'grey'
 export interface ColorOption<Id extends string> extends OptionBase<Id> {
   color: string
@@ -154,6 +165,13 @@ export const SPLITTERS: OptionBase<SplitterId>[] = [
 export type FrontAccentId = 'body' | 'gloss' | 'carbon'
 export const FRONT_ACCENTS: FinishOption<FrontAccentId>[] = [F.body, F.gloss, F.carbon]
 
+export type HoodId = 'stock' | 'dome' | 'vented'
+export const HOODS: OptionBase<HoodId>[] = [
+  { id: 'stock', label: 'Stock bonnet', tier: 0 },
+  { id: 'dome', label: 'Power-dome bonnet', tier: 2, concept: true },
+  { id: 'vented', label: 'Carbon-look vented bonnet', tier: 3, concept: true, note: 'Visual concept: dome, twin heat extractors and carbon-look skin.' },
+]
+
 // ---------- Rear ----------
 export type DiffuserId = 'stock' | 'performance' | 'track'
 export const DIFFUSERS: OptionBase<DiffuserId>[] = [
@@ -167,6 +185,11 @@ export const EXHAUSTS: ColorOption<ExhaustId>[] = [
   { id: 'chrome', label: 'Polished chrome tips', color: '#d8dce0', tier: 1 },
   { id: 'carbon', label: 'Carbon-look sleeves', color: '#1a1b1e', tier: 2 },
   { id: 'titanium', label: 'Heat-blued titanium-look', color: '#4a5d9a', tier: 3, concept: true },
+]
+export type ExhaustLayoutId = 'twin' | 'quad'
+export const EXHAUST_LAYOUTS: OptionBase<ExhaustLayoutId>[] = [
+  { id: 'twin', label: 'Twin tips (one per side)', tier: 0 },
+  { id: 'quad', label: 'Quad tips', tier: 2, concept: true },
 ]
 export type SpoilerId = 'lip' | 'carbonLip' | 'ducktail' | 'wing'
 export const SPOILERS: OptionBase<SpoilerId>[] = [
@@ -193,6 +216,14 @@ export const WINDOW_TRIMS: FinishOption<WindowTrimId>[] = [
   F.chrome,
   F.matte,
 ]
+export type VentId = 'none' | 'gloss' | 'carbon'
+export const VENTS: OptionBase<VentId>[] = [
+  { id: 'none', label: 'Clean front wings', tier: 0 },
+  { id: 'gloss', label: 'Gloss-black air breathers', tier: 1, concept: true },
+  { id: 'carbon', label: 'Carbon-look air breathers', tier: 2, concept: true },
+]
+export type RoofId = 'body' | 'gloss' | 'carbon'
+export const ROOFS: FinishOption<RoofId>[] = [F.body, { ...F.gloss, label: 'Gloss-black roof' }, { ...F.carbon, label: 'Carbon-look roof' }]
 export type SideAccentId = 'none' | 'tricolour' | 'pinstripe'
 export const SIDE_ACCENTS: OptionBase<SideAccentId>[] = [
   { id: 'none', label: 'Clean flanks', tier: 0 },
@@ -287,6 +318,12 @@ export interface Configuration {
   steering: SteeringId
   stitching: StitchId
   rideHeight: RideHeightId
+  hood: HoodId
+  roof: RoofId
+  vents: VentId
+  exhaustLayout: ExhaustLayoutId
+  discs: DiscId
+  tyres: TyreId
 }
 
 export const STOCK_CONFIG: Configuration = {
@@ -316,6 +353,12 @@ export const STOCK_CONFIG: Configuration = {
   steering: 'leather',
   stitching: 'blue',
   rideHeight: 'stock',
+  hood: 'stock',
+  roof: 'body',
+  vents: 'none',
+  exhaustLayout: 'twin',
+  discs: 'plain',
+  tyres: 'plain',
 }
 
 /** A configuration key whose value is one of a list of options */
@@ -341,7 +384,10 @@ export const CATEGORIES: Category[] = [
   {
     id: 'exterior', label: 'Exterior', camera: 'exterior',
     blurb: 'Clearcoat paint on the body panels only. Glass, rubber, lights and trim keep their own materials.',
-    groups: [{ key: 'paint', title: 'Paint', component: 'body', options: PAINTS, kind: 'swatch' }],
+    groups: [
+      { key: 'paint', title: 'Paint', component: 'body', options: PAINTS, kind: 'swatch' },
+      { key: 'roof', title: 'Roof', component: 'body', options: ROOFS, kind: 'list' },
+    ],
   },
   {
     id: 'wheels', label: 'Wheels', camera: 'wheels',
@@ -350,12 +396,15 @@ export const CATEGORIES: Category[] = [
       { key: 'wheelStyle', title: 'Wheel design', component: 'wheels', options: WHEEL_STYLES, kind: 'wheel' },
       { key: 'rimSize', title: 'Rim size and tyre profile', component: 'wheels', options: RIM_SIZES, kind: 'list' },
       { key: 'caliper', title: 'Brake calipers', component: 'wheels', options: CALIPERS, kind: 'swatch' },
+      { key: 'discs', title: 'Brake discs', component: 'wheels', options: DISCS, kind: 'list' },
+      { key: 'tyres', title: 'Tyre sidewall', component: 'wheels', options: TYRES, kind: 'list' },
     ],
   },
   {
     id: 'front', label: 'Front', camera: 'fascia',
     blurb: 'Kidney grille, lower splitter and the intake surrounds.',
     groups: [
+      { key: 'hood', title: 'Bonnet', component: 'hood', options: HOODS, kind: 'list' },
       { key: 'grille', title: 'Kidney grille', component: 'grille', options: GRILLES, kind: 'list' },
       { key: 'splitter', title: 'Front splitter', component: 'splitter', options: SPLITTERS, kind: 'list' },
       { key: 'frontAccent', title: 'Bumper accents', component: 'frontBumper', options: FRONT_ACCENTS, kind: 'list' },
@@ -367,6 +416,7 @@ export const CATEGORIES: Category[] = [
     groups: [
       { key: 'diffuser', title: 'Rear diffuser', component: 'diffuser', options: DIFFUSERS, kind: 'list' },
       { key: 'exhaust', title: 'Exhaust tips', component: 'exhaust', options: EXHAUSTS, kind: 'swatch' },
+      { key: 'exhaustLayout', title: 'Exhaust layout', component: 'exhaust', options: EXHAUST_LAYOUTS, kind: 'list' },
       { key: 'spoiler', title: 'Spoiler', component: 'spoiler', options: SPOILERS, kind: 'list' },
       { key: 'rearTrim', title: 'Rear lower trim', component: 'rearBumper', options: REAR_TRIMS, kind: 'list' },
     ],
@@ -376,6 +426,7 @@ export const CATEGORIES: Category[] = [
     blurb: 'Mirror caps, side skirts, window surrounds and graphics.',
     groups: [
       { key: 'mirrorCaps', title: 'Mirror caps', component: 'mirrors', options: MIRROR_CAPS, kind: 'list' },
+      { key: 'vents', title: 'Front-wing vents', component: 'vents', options: VENTS, kind: 'list' },
       { key: 'skirts', title: 'Side skirts', component: 'sideSkirts', options: SKIRTS, kind: 'list' },
       { key: 'windowTrim', title: 'Window trim', component: 'windowTrim', options: WINDOW_TRIMS, kind: 'list' },
       { key: 'sideAccent', title: 'Side accent', component: 'body', options: SIDE_ACCENTS, kind: 'list' },
@@ -425,12 +476,13 @@ export const COMPONENT_LABELS: Record<ComponentId, string> = {
   taillights: 'Taillights',
   interior: 'Cabin',
   engine: 'Engine bay',
+  vents: 'Wing vents',
 }
 
 /** Which category opens when a component is clicked in the scene */
 export const COMPONENT_CATEGORY: Record<ComponentId, CategoryId> = {
   body: 'exterior',
-  hood: 'exterior',
+  hood: 'front',
   frontBumper: 'front',
   grille: 'front',
   splitter: 'front',
@@ -445,7 +497,8 @@ export const COMPONENT_CATEGORY: Record<ComponentId, CategoryId> = {
   spoiler: 'rear',
   taillights: 'lighting',
   interior: 'interior',
-  engine: 'exterior',
+  engine: 'front',
+  vents: 'side',
 }
 
 export function findOption(key: OptionKey, id: string): OptionBase<string> | undefined {

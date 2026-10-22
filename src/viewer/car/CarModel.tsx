@@ -3,6 +3,7 @@ import { useMemo, useRef, type ReactNode } from 'react'
 import * as THREE from 'three'
 import { rideOf, rimOf, wheelOf, type Configuration, type ViewMode } from '../../lib/configuration'
 import { BodyShell, Hood } from './Body'
+import { LightShow, ScanBeam } from './Effects'
 import { EngineBay, FrontEnd } from './Front'
 import { AXLE_FRONT, AXLE_REAR, TRACK_HALF, TYRE_RADIUS } from './geometry'
 import { Interior } from './Interior'
@@ -10,7 +11,7 @@ import { CarMaterialsContext, useCarMaterials } from './materials'
 import { CarContext, Part, type CarContextValue } from './Part'
 import { RearEnd } from './Rear'
 import { SideParts } from './Side'
-import { Wheel, useWheelGeometry } from './Wheel'
+import { Wheel, useLettering, useWheelGeometry } from './Wheel'
 
 interface Props {
   config: Configuration
@@ -37,6 +38,7 @@ export function CarModel({ config, mode, interactive, hoodOpen, reducedMotion, l
   const ctx = useMemo<CarContextValue>(() => ({ interactive, exploded, reducedMotion }), [interactive, exploded, reducedMotion])
   const wheelGeo = useWheelGeometry(wheelOf(config), rimOf(config).inches)
   const drop = rideOf(config).drop
+  const letteringMat = useLettering(wheelGeo.letteringRatio)
 
   useFrame((_, dt) => {
     const r = root.current
@@ -61,21 +63,29 @@ export function CarModel({ config, mode, interactive, hoodOpen, reducedMotion, l
       <CarMaterialsContext.Provider value={materials}>
         <group ref={root}>
           <group ref={body}>
-            <BodyShell accent={config.sideAccent} />
-            <Hood open={hoodOpen || exploded} />
+            <BodyShell accent={config.sideAccent} roof={config.roof} />
+            <Hood open={hoodOpen || exploded} variant={config.hood} />
             <EngineBay />
             <FrontEnd grille={config.grille} splitter={config.splitter} accent={config.frontAccent} />
-            <RearEnd diffuser={config.diffuser} spoiler={config.spoiler} trim={config.rearTrim} />
-            <SideParts mirrorCaps={config.mirrorCaps} skirts={config.skirts} windowTrim={config.windowTrim} />
+            <RearEnd diffuser={config.diffuser} spoiler={config.spoiler} trim={config.rearTrim} layout={config.exhaustLayout} />
+            <SideParts mirrorCaps={config.mirrorCaps} skirts={config.skirts} windowTrim={config.windowTrim} vents={config.vents} />
             <Interior />
           </group>
+          {interactive && <LightShow />}
+          {interactive && mode === 'technical' && <ScanBeam />}
           <Part
             id="wheels"
             hotspot={{ position: [AXLE_FRONT, TYRE_RADIUS + 0.12, TRACK_HALF + 0.16], normal: [0.2, 0.2, 1], camera: 'wheels' }}
           >
             {WHEELS.map((w, i) => (
               <WheelSlot key={i} pos={w.pos} mirrored={w.mirrored} exploded={exploded} reducedMotion={reducedMotion}>
-                <Wheel geo={wheelGeo} mirrored={w.mirrored} position={[0, 0, 0]} />
+                <Wheel
+                  geo={wheelGeo}
+                  mirrored={w.mirrored}
+                  position={[0, 0, 0]}
+                  drilled={config.discs === 'drilled'}
+                  lettering={config.tyres === 'lettered' && mode !== 'technical' ? letteringMat : null}
+                />
               </WheelSlot>
             ))}
           </Part>

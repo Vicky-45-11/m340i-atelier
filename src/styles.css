@@ -1338,3 +1338,134 @@ a {
   font-size: 11px;
   color: var(--ink-3);
 }
+
+/* exploded view: every marker becomes a labelled callout */
+.hotspot.is-callout .hotspot-label {
+  max-width: 180px;
+  margin-left: 8px;
+  padding: 3px 9px;
+  border: 1px solid rgba(76, 141, 255, 0.55);
+  background: rgba(6, 12, 24, 0.86);
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.hotspot.is-callout .hotspot-dot {
+  width: 12px;
+  height: 12px;
+}
+.hotspot.is-callout .hotspot-dot::after {
+  inset: 2px;
+}
+
+.pill .pill-toggle {
+  width: auto;
+  height: 24px;
+  padding: 0 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: rgba(47, 123, 255, 0.2);
+  color: var(--accent-2);
+}
+.pill .pill-toggle.is-on {
+  background: var(--accent);
+  color: #fff;
+}
+.tour-btn {
+  height: 36px;
+  background: rgba(10, 12, 15, 0.7);
+  border-color: rgba(47, 123, 255, 0.6);
+}
+.tour-btn.is-on {
+  background: linear-gradient(180deg, #3b86ff, #1f63e0);
+}
+
+/* parts tour card */
+.tour {
+  position: absolute;
+  z-index: 7;
+  left: 26px;
+  bottom: 70px;
+  width: min(360px, calc(100% - 52px));
+  padding: 16px 18px;
+  border: 1px solid rgba(76, 141, 255, 0.4);
+  border-radius: 16px;
+  background: linear-gradient(160deg, rgba(14, 22, 40, 0.92), rgba(7, 9, 14, 0.92));
+  backdrop-filter: blur(14px);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.tour-progress {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 12px;
+}
+.tour-progress button {
+  flex: 1;
+  height: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+}
+.tour-progress button.is-done {
+  background: rgba(76, 141, 255, 0.5);
+}
+.tour-progress button.is-active {
+  background: var(--accent-2);
+  box-shadow: 0 0 8px var(--accent);
+}
+.tour-title {
+  margin: 4px 0 6px;
+  font-size: 24px;
+  letter-spacing: -0.01em;
+}
+.tour-blurb {
+  margin: 0 0 10px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+.tour-spec {
+  margin: 0 0 12px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent-2);
+}
+.tour-spec li::before {
+  content: '▸ ';
+  color: var(--ink-3);
+}
+.tour-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.tour-actions .btn {
+  margin-left: auto;
+}
+@media (max-width: 900px) {
+  .tour {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    bottom: 96px;
+    padding: 12px 14px;
+  }
+  .tour-blurb,
+  .tour-spec {
+    display: none;
+  }
+  .tour-title {
+    font-size: 18px;
+  }
+  .tour-btn {
+    height: 34px;
+    padding: 0 10px;
+    font-size: 11.5px;
+  }
+}

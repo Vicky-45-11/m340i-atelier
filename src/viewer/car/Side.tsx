@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { MIRROR_CAPS, WINDOW_TRIMS, finishOf, type MirrorCapId, type SkirtId, type WindowTrimId } from '../../lib/configuration'
+import { MIRROR_CAPS, WINDOW_TRIMS, finishOf, type MirrorCapId, type SkirtId, type VentId, type WindowTrimId } from '../../lib/configuration'
 import { windowTrimGeometry } from './Body'
 import { ARCH_RADIUS, AXLE_FRONT, AXLE_REAR, seamPoint, sideRibbon, surfaceZ } from './geometry'
 import { useMat } from './materials'
@@ -29,6 +29,19 @@ const mirrorGeometry = once(() => {
   const arm = new THREE.BoxGeometry(0.07, 0.028, 0.12)
   return { centre, cap, back, glass, arm, armPos: new THREE.Vector3(MIRROR_X, ys + 0.045, zs + 0.06) }
 })
+
+// Front-wing air breather: a recessed opening with two horizontal blades, behind the front arch
+const VENT_X0 = AXLE_FRONT - ARCH_RADIUS - 0.2
+const VENT_X1 = AXLE_FRONT - ARCH_RADIUS - 0.03
+const ventGeometry = once(() => ({
+  opening: sideRibbon(VENT_X0, VENT_X1, 0.56, 0.66, 0.002, 20),
+  frame: [
+    sideRibbon(VENT_X0 - 0.012, VENT_X1 + 0.012, 0.548, 0.56, 0.006, 20),
+    sideRibbon(VENT_X0 - 0.012, VENT_X1 + 0.012, 0.66, 0.672, 0.006, 20),
+    sideRibbon(VENT_X0, VENT_X1, 0.592, 0.6, 0.01, 20),
+    sideRibbon(VENT_X0, VENT_X1, 0.622, 0.63, 0.01, 20),
+  ],
+}))
 
 const skirtGeometry = once(() => {
   const blade = (y: number, out: number, thick: number) => {
@@ -65,10 +78,12 @@ export function SideParts({
   mirrorCaps,
   skirts,
   windowTrim,
+  vents,
 }: {
   mirrorCaps: MirrorCapId
   skirts: SkirtId
   windowTrim: WindowTrimId
+  vents: VentId
 }) {
   const m = useMat()
   const mg = mirrorGeometry()
@@ -120,6 +135,24 @@ export function SideParts({
           </group>
         ))}
       </Part>
+
+      {vents !== 'none' && (
+        <Part
+          id="vents"
+          explode={[0.05, 0.05, 0.22]}
+          hotspot={{ position: [(VENT_X0 + VENT_X1) / 2, 0.69, surfaceZ((VENT_X0 + VENT_X1) / 2, 0.61) + 0.04], normal: [0, 0.2, 1], camera: 'wheels' }}
+        >
+          {[1, -1].map((s) => (
+            <group key={s} scale={s === 1 ? undefined : MIRROR_Z}>
+              <mesh geometry={ventGeometry().opening} material={m.get('cavity')} />
+              <mesh geometry={ventGeometry().opening} material={m.get('matteBlack')} />
+              {ventGeometry().frame.map((g, i) => (
+                <mesh key={i} geometry={g} material={vents === 'carbon' ? m.get('carbon') : m.get('glossBlack')} />
+              ))}
+            </group>
+          ))}
+        </Part>
+      )}
 
       <Part
         id="windowTrim"

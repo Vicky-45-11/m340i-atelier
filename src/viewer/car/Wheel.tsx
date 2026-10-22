@@ -2,7 +2,7 @@ import { useEffect, useMemo } from 'react'
 import * as THREE from 'three'
 import type { WheelStyle } from '../../lib/configuration'
 import { TYRE_RADIUS, TYRE_WIDTH } from './geometry'
-import { useMat } from './materials'
+import { tyreLetteringTexture, useMat } from './materials'
 
 // One procedural wheel assembly: tyre, rim barrel, spokes, hub, brake disc
 // and caliper. The local axle points along +z, with the outer face at +z.
@@ -23,6 +23,9 @@ export interface WheelGeometry {
   disc: THREE.BufferGeometry
   hat: THREE.BufferGeometry
   caliper: THREE.BufferGeometry
+  discFace: THREE.BufferGeometry
+  lettering: THREE.BufferGeometry
+  letteringRatio: number
   rimRadius: number
 }
 
@@ -150,7 +153,18 @@ export function buildWheelGeometry(style: WheelStyle, inches: number): WheelGeom
   caliper.rotateZ(Math.PI * 0.55)
   caliper.translate(0, 0, 0.012)
 
-  return { tyre, barrel, lip, backplate, spoke, spokeFace, spokeAngles, hub, cap, nut, disc, hat, caliper, rimRadius: rimR }
+  const discFace = new THREE.RingGeometry(0.095, discR, 56)
+  discFace.translate(0, 0, -0.03 + 0.0155)
+
+  const letterInner = rimR + 0.018
+  const letterOuter = R - 0.03
+  const lettering = new THREE.RingGeometry(letterInner, letterOuter, 96, 1)
+  lettering.translate(0, 0, w / 2 + 0.0135)
+
+  return {
+    tyre, barrel, lip, backplate, spoke, spokeFace, spokeAngles, hub, cap, nut, disc, hat, caliper,
+    discFace, lettering, letteringRatio: letterInner / letterOuter, rimRadius: rimR,
+  }
 }
 
 function disposeWheel(g: WheelGeometry) {
@@ -165,7 +179,32 @@ export function useWheelGeometry(style: WheelStyle, inches: number) {
 
 const NUT_ANGLES = [0, 1, 2, 3, 4].map((i) => (i / 5) * Math.PI * 2)
 
-export function Wheel({ geo, mirrored, position }: { geo: WheelGeometry; mirrored: boolean; position: [number, number, number] }) {
+/** Sidewall lettering material for one rim size */
+export function useLettering(ratio: number) {
+  const mat = useMemo(
+    () => new THREE.MeshStandardMaterial({ map: tyreLetteringTexture(ratio), transparent: true, alphaTest: 0.4, roughness: 0.7, metalness: 0, depthWrite: false }),
+    [ratio],
+  )
+  useEffect(() => () => {
+    mat.map?.dispose()
+    mat.dispose()
+  }, [mat])
+  return mat
+}
+
+export function Wheel({
+  geo,
+  mirrored,
+  position,
+  drilled,
+  lettering,
+}: {
+  geo: WheelGeometry
+  mirrored: boolean
+  position: [number, number, number]
+  drilled: boolean
+  lettering: THREE.Material | null
+}) {
   const m = useMat()
   return (
     <group position={position} scale={[1, 1, mirrored ? -1 : 1]}>
@@ -185,6 +224,8 @@ export function Wheel({ geo, mirrored, position }: { geo: WheelGeometry; mirrore
         <mesh key={i} geometry={geo.nut} material={m.get('chrome')} position={[Math.cos(a) * 0.05, Math.sin(a) * 0.05, 0]} />
       ))}
       <mesh geometry={geo.disc} material={m.get('disc')} />
+      {drilled && <mesh geometry={geo.discFace} material={m.get('discFace')} />}
+      {lettering && <mesh geometry={geo.lettering} material={lettering} scale={mirrored ? [-1, 1, 1] : undefined} />}
       <mesh geometry={geo.hat} material={m.get('disc')} />
       {/* caliper sits behind the axle, upper rear quadrant; it does not mirror front-to-back */}
       <mesh geometry={geo.caliper} material={m.get('caliper')} />

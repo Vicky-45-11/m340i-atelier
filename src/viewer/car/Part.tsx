@@ -27,6 +27,22 @@ const hoverHighlight = highlight.clone()
 hoverHighlight.opacity = 0.1
 const noRaycast = () => null
 
+// Isolate mode: every part except the selected one is swapped to this ghost
+const ghost = new THREE.MeshBasicMaterial({ color: '#5b95ff', transparent: true, opacity: 0.035, depthWrite: false })
+
+function syncGhost(root: THREE.Object3D, on: boolean) {
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh || o.userData.overlay) return
+    if (on && mesh.material !== ghost) {
+      mesh.userData.origMaterial = mesh.material
+      mesh.material = ghost
+    } else if (!on && mesh.material === ghost && mesh.userData.origMaterial) {
+      mesh.material = mesh.userData.origMaterial
+    }
+  })
+}
+
 function syncOverlays(root: THREE.Object3D, mat: THREE.Material | null) {
   const meshes: THREE.Mesh[] = []
   root.traverse((o) => {
@@ -70,6 +86,7 @@ export function Part({ id, children, explode, hotspot, position }: PartProps) {
   const group = useRef<THREE.Group>(null)
   const inner = useRef<THREE.Group>(null)
   const state = useRef<'none' | 'hover' | 'selected'>('none')
+  const ghosted = useRef(false)
   const select = useConfigurator((s) => s.select)
   const hover = useConfigurator((s) => s.hover)
   const target = useMemo(() => new THREE.Vector3(), [])
@@ -84,6 +101,11 @@ export function Part({ id, children, explode, hotspot, position }: PartProps) {
 
     if (!interactive) return
     const s = useConfigurator.getState()
+    const ghostNow = s.isolate && s.selected !== null && s.selected !== id
+    if (ghostNow || ghosted.current) {
+      syncGhost(g, ghostNow)
+      ghosted.current = ghostNow
+    }
     const next = s.selected === id ? 'selected' : s.hovered === id ? 'hover' : 'none'
     if (next !== 'none' || state.current !== 'none') {
       syncOverlays(g, next === 'selected' ? highlight : next === 'hover' ? hoverHighlight : null)
@@ -124,7 +146,8 @@ const tmpN = new THREE.Vector3()
 function Hotspot({ id, def }: { id: ComponentId; def: HotspotDef }) {
   const anchor = useRef<THREE.Group>(null)
   const el = useRef<HTMLButtonElement>(null)
-  const show = useConfigurator((s) => s.hotspots && !s.compare && s.introDone)
+  const show = useConfigurator((s) => (s.hotspots || s.viewMode === 'exploded') && !s.compare && s.introDone && !(s.isolate && s.selected !== id))
+  const callout = useConfigurator((s) => s.viewMode === 'exploded')
   const isSelected = useConfigurator((s) => s.selected === id)
   const select = useConfigurator((s) => s.select)
   const normal = useMemo(() => new THREE.Vector3(...def.normal).normalize(), [def.normal])
@@ -148,7 +171,7 @@ function Hotspot({ id, def }: { id: ComponentId; def: HotspotDef }) {
         <button
           ref={el}
           type="button"
-          className={`hotspot${isSelected ? ' is-active' : ''}`}
+          className={`hotspot${isSelected ? ' is-active' : ''}${callout ? ' is-callout' : ''}`}
           onClick={(e) => {
             e.stopPropagation()
             select(id, def.camera)

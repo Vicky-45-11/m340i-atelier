@@ -34,6 +34,11 @@ interface State {
   introDone: boolean
   sceneReady: boolean
   toast: string | null
+  /** show only the selected part, everything else as a ghost */
+  isolate: boolean
+  lightShow: boolean
+  /** index into the parts tour, or null when the tour is off */
+  tour: number | null
 
   setOption: <K extends OptionKey>(key: K, value: Configuration[K]) => void
   setCustomPaint: (hex: string) => void
@@ -55,6 +60,9 @@ interface State {
   finishIntro: () => void
   setSceneReady: () => void
   notify: (msg: string) => void
+  setIsolate: (on: boolean) => void
+  setLightShow: (on: boolean) => void
+  setTour: (i: number | null) => void
 }
 
 function initialConfig(): Configuration {
@@ -97,6 +105,9 @@ export const useConfigurator = create<State>((set, get) => {
     introDone: introSeen(),
     sceneReady: false,
     toast: null,
+    isolate: false,
+    lightShow: false,
+    tour: null,
 
     setOption: (key, value) => commit({ ...get().config, [key]: value }),
     setCustomPaint: (hex) => commit({ ...get().config, paint: 'custom', customPaint: hex }),
@@ -133,6 +144,7 @@ export const useConfigurator = create<State>((set, get) => {
     select: (c, moveCamera) =>
       set((s) => ({
         selected: c,
+        ...(c ? {} : { isolate: false }),
         ...(c ? { category: COMPONENT_CATEGORY[c] } : {}),
         ...(moveCamera ? { camera: moveCamera, cameraNonce: s.cameraNonce + 1 } : {}),
       })),
@@ -153,6 +165,9 @@ export const useConfigurator = create<State>((set, get) => {
       set((s) => ({ introDone: true, camera: 'exterior', cameraNonce: s.cameraNonce + 1 }))
     },
     setSceneReady: () => set({ sceneReady: true }),
+    setIsolate: (on) => set({ isolate: on }),
+    setLightShow: (on) => set({ lightShow: on }),
+    setTour: (i) => set(i === null ? { tour: null, isolate: false, selected: null } : { tour: i, compare: false }),
     notify: (msg) => {
       clearTimeout(toastTimer)
       set({ toast: msg })

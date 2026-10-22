@@ -24,14 +24,17 @@ To deploy on Vercel, import the repo and keep the defaults: the Vite preset, `np
 | --- | --- |
 | Viewer | 360° orbit, zoom, pan, damped controls, 11 camera presets with animated transitions, reset, fullscreen, auto-rotate, PNG snapshot. The camera is kept above the floor. |
 | Paint | 6 named paints plus a custom colour picker. Only the clearcoat paint material changes. Glass, rubber, lamps and trim keep their own materials. |
-| Wheels | 6 procedural designs, 3 rim sizes and 4 caliper colours. Each choice rebuilds the wheel geometry. The tyre's outer diameter stays fixed, so wheels never cut into the arches. |
-| Front | Kidney grille (chrome, gloss black, mesh), splitter (stock, lip, track with end plates), intake surround finish. |
-| Rear | Diffuser (2, 4 or 6 fins), exhaust tip finish, spoiler (lip, carbon lip, ducktail, wing on stands), lower trim finish. |
-| Side | Mirror caps, side skirts, window trim, stripe graphics. |
+| Wheels | 6 procedural designs, 3 rim sizes, 4 caliper colours, plain or cross-drilled discs, plain or raised-letter tyres (our own ATELIER lettering). Each choice rebuilds the wheel geometry. The tyre's outer diameter stays fixed, so wheels never cut into the arches. |
+| Front | Kidney grille (chrome, gloss black, mesh), splitter (stock, lip, track with end plates), intake surround finish, bonnet (stock, power dome, carbon-look vented with twin heat extractors). |
+| Rear | Diffuser (2, 4 or 6 fins), twin or quad exhaust tips and their finish, spoiler (lip, carbon lip, ducktail, wing on stands), lower trim finish. |
+| Side | Mirror caps, side skirts, front-wing air breathers (none, gloss black, carbon look), window trim, stripe graphics. |
+| Exterior | Roof finish (body colour, gloss black, carbon look) with a matching shark-fin antenna. |
 | Lighting | Daytime signature colour and bezel, taillight lens, cabin ambient light. |
 | Interior | Seats, dashboard trim, steering wheel rim and accent colour, all on a simplified prototype cabin. |
 | Stance | Stock, -20 mm and -40 mm. The body drops over fixed wheels and geometry is never stretched. |
 | Modes | Studio render, Technical (labelled as a stylised x-ray), Exploded (only separately modelled parts move), Stock vs custom split slider rendered from one camera. |
+| One part at a time | Isolate turns every other part into a faint ghost. The 14-step parts tour walks through grille, lamps, bonnet, engine, splitter, wheels, mirrors, skirts, trim, spoiler, taillights, diffuser, exhausts and cabin, isolating each one with its current options (arrow keys and Esc work). Exploded view shows labelled callouts. |
+| Effects | Bloom glow on lamps, a reflective studio floor (desktop), a light show (ignition sweep, headlight beams, light pools, blue underglow) and a scanning beam in Technical view. Effects are off in compare mode, and bloom and reflections are off on mobile. |
 | Hotspots | Markers that follow the parts and hide when the part faces away. Clicking one focuses the camera, highlights the part and opens its options. Clicking a mesh does the same. |
 | Lighting presets | Dark Studio, Arctic White, Blue Hour, Urban Night, Warm Sunset. Reflections come from local light panels, so nothing is downloaded. |
 | State | One typed configuration with undo/redo (buttons and Ctrl+Z / Ctrl+Shift+Z), reset per category, reset all, autosave to localStorage, named saved builds, share links (`?build=`), JSON export. |

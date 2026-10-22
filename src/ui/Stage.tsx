@@ -3,6 +3,7 @@ import { COMPONENT_LABELS, diffFromStock, paintOf, rimOf, wheelOf, type ViewMode
 import { sceneBridge, useConfigurator } from '../store/configurator'
 import { CAMERA_PRESETS } from '../viewer/CameraRig'
 import { LIGHTING } from '../viewer/lighting'
+import { TourCard } from './Tour'
 
 const CarScene = lazy(() => import('../viewer/CarScene'))
 
@@ -70,6 +71,12 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
   const select = useConfigurator((s) => s.select)
   const ready = useConfigurator((s) => s.sceneReady)
   const notify = useConfigurator((s) => s.notify)
+  const isolate = useConfigurator((s) => s.isolate)
+  const setIsolate = useConfigurator((s) => s.setIsolate)
+  const lightShow = useConfigurator((s) => s.lightShow)
+  const setLightShow = useConfigurator((s) => s.setLightShow)
+  const tour = useConfigurator((s) => s.tour)
+  const setTour = useConfigurator((s) => s.setTour)
 
   const paint = paintOf(config)
   const changes = diffFromStock(config).length
@@ -180,6 +187,12 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
             ))}
           </select>
         </label>
+        <button type="button" className={`btn small tour-btn${tour !== null ? ' is-on' : ''}`} onClick={() => setTour(tour === null ? 0 : null)} aria-pressed={tour !== null}>
+          {tour === null ? 'Parts tour' : 'End tour'}
+        </button>
+        <button type="button" className={`icon-btn${lightShow ? ' is-on' : ''}`} onClick={() => setLightShow(!lightShow)} title="Light show" aria-pressed={lightShow}>
+          ✦
+        </button>
         <button type="button" className={`icon-btn${hotspots ? ' is-on' : ''}`} onClick={() => setHotspots(!hotspots)} title="Toggle hotspots" aria-pressed={hotspots}>
           ◎
         </button>
@@ -208,11 +221,16 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
         })}
       </div>
 
-      {(hovered || selected) && !compare && (
+      <TourCard />
+
+      {(hovered || selected) && !compare && tour === null && (
         <div className="hud hud-bc">
           {selected ? (
             <span className="pill">
               <strong>{COMPONENT_LABELS[selected]}</strong> selected
+              <button type="button" className={`pill-toggle${isolate ? ' is-on' : ''}`} onClick={() => setIsolate(!isolate)} aria-pressed={isolate}>
+                {isolate ? 'Show all' : 'Isolate'}
+              </button>
               <button type="button" onClick={() => select(null)} aria-label="Clear selection">
                 ✕
               </button>
@@ -227,7 +245,7 @@ export function Stage({ reducedMotion }: { reducedMotion: boolean }) {
         </div>
       )}
 
-      {!dragged && ready && <div className="drag-hint" aria-hidden>Drag to rotate · scroll or pinch to zoom · right-drag to pan</div>}
+      {!dragged && ready && tour === null && <div className="drag-hint" aria-hidden>Drag to rotate · scroll or pinch to zoom · right-drag to pan</div>}
 
       {compare && (
         <div className="compare" aria-label="Stock versus custom comparison">

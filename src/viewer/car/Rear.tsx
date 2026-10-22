@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { REAR_TRIMS, finishOf, type DiffuserId, type RearTrimId, type SpoilerId } from '../../lib/configuration'
+import { REAR_TRIMS, finishOf, type DiffuserId, type ExhaustLayoutId, type RearTrimId, type SpoilerId } from '../../lib/configuration'
 import { RearBumperShell } from './Body'
 import { deckLoft, endOutline, endPatch, roundedRectShape, surfaceY, tailX } from './geometry'
 import { useMat } from './materials'
@@ -119,10 +119,12 @@ export function RearEnd({
   diffuser,
   spoiler,
   trim,
+  layout,
 }: {
   diffuser: DiffuserId
   spoiler: SpoilerId
   trim: RearTrimId
+  layout: ExhaustLayoutId
 }) {
   const m = useMat()
   const g = rearGeometry()
@@ -162,8 +164,8 @@ export function RearEnd({
         explode={[-0.95, 0, 0.1]}
         hotspot={{ position: [tipX - 0.12, 0.27, 0.52], normal: [-1, 0, 0.3], camera: 'diffuser' }}
       >
-        {[1, -1].map((s) => (
-          <group key={s} position={[tipX + 0.05, 0.27, s * 0.52]}>
+        {(layout === 'quad' ? [0.6, 0.45, -0.45, -0.6] : [0.52, -0.52]).map((z) => (
+          <group key={z} position={[tailX(0.27, z) + 0.05, 0.27, z]} scale={layout === 'quad' ? 0.82 : 1}>
             <mesh geometry={g.tip} material={m.get('exhaust')} />
             <mesh geometry={g.tipBack} position={[0.02, 0, 0]} material={m.get('matteBlack')} />
           </group>
