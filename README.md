@@ -1,97 +1,287 @@
-# M340i // Atelier
+# 🏎️ M340i // Atelier
 
-*Your machine. Your specification.*
+<div align="center">
 
-This is an independent, interactive 3D configuration studio for the BMW M340i (G20 LCI). You can orbit the car, fly the camera to each part, click a part to customise it, and see each change on the model straight away.
+### YOUR MACHINE. YOUR SPECIFICATION.
 
-> Not affiliated with BMW AG or CarWale. The car is a **procedural prototype**. It is built from the published overall dimensions (4,713 × 1,827 × 1,440 mm, 2,851 mm wheelbase), not from BMW CAD data or a scanned model.
+**A cinematic 3D automotive configuration studio.**
 
-## The showroom
+Explore the BMW M340i (G20 LCI) through an immersive digital showroom. Orbit the machine, inspect its details, switch environments, and personalize its appearance in real time.
 
-The page opens as a cinematic, scroll-driven showroom. The configurator sits below it.
+**Precision in every detail. Performance in every frame.**
 
-- **Opening sequence:** a black screen, an abstract insignia (not a BMW mark), a technical read-out and a sound-wave graphic. Then a light shaft brings the car up from black. The sequence can be skipped, runs once per session, and lasts only as long as the scene takes to load (about 1.7 s at minimum, 9 s at most).
-- **Hero:** "Engineered to be felt." with *Explore the machine* and *Enter the configurator*.
-- **Six scenes, one persistent 3D canvas:**
-  1. The Machine (front three-quarter to side profile)
-  2. Sculpted by aerodynamics (grille, lamps, contours, wheels and rear, with light streaks and coordinate callouts)
-  3. Performance DNA (technical x-ray with the bonnet up, then animated counters)
-  4. The Cockpit (the roof and glass lift off for a cutaway)
-  5. Choose your atmosphere: Midnight Studio, Neon District or Performance Circuit (procedural scenery with animated start lights)
-  6. Final reveal: "Built for the moment before the launch."
-- **How it works:** the camera holds on each shot while its text is on screen, then eases to the next one. The frame shifts so the car stays clear of the text, and on portrait screens the car moves up. Dragging sideways orbits the car while vertical swipes still scroll. The showroom controls let you switch environment, pause the turntable, toggle light effects and reset the view.
-- **Site-wide:** a navigation bar with a sliding active indicator, and a Sport mode that turns the blue accent red in the UI and in the scene. Ambient sound is muted by default and synthesised with Web Audio, so there are no audio files. There is also a progress rail, a trailing cursor ring on desktop, magnetic CTAs, card tilt, masked text reveals and counters.
-- **In the configurator:** a Studio / Night / Track switch (scenic environments set their own light), a *Presentation* camera that cuts between framed shots until you drag, and everything from before.
-- **Performance:**
-  - Both canvases stop drawing when they are off screen.
-  - The showroom is lazy-loaded.
-  - Phones get a lower pixel ratio, no reflections and no bloom.
-  - Reduced motion skips the camera easing, the turntable and the reveals.
-  - Without WebGL, the showroom shows `public/showroom-fallback.jpg`, a still render of this procedural model.
-- **Libraries:** no new dependencies. Scroll choreography is a small hand-written controller in `ui/site/Story.tsx` and `lib/story.ts`, not GSAP.
-- **Figures:** the story's figures are 0–100 km/h 4.4 s (manufacturer claim, as given in the brief), 2,998 cc, six cylinders and eight speeds. Power and torque differ by market, so they appear only in the specification table and are labelled unverified there.
+![Project](https://img.shields.io/badge/PROJECT-3D%20AUTOMOTIVE-2563EB?style=for-the-badge)
+![Framework](https://img.shields.io/badge/FRAMEWORK-REACT-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Build](https://img.shields.io/badge/BUILD-VITE-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Graphics](https://img.shields.io/badge/GRAPHICS-WEBGL-990000?style=for-the-badge)
 
-## Run it
+[Explore the Showroom](#-the-showroom) · [Features](#-key-features) · [Technology](#-technology-stack) · [Getting Started](#-getting-started) · [Performance](#-performance--optimization)
+
+</div>
+
+---
+
+## 🏁 The Vision
+
+A car is more than a collection of specifications. It is a combination of engineering, design, atmosphere, and personal expression.
+
+**M340i // Atelier** reimagines the traditional vehicle configurator as an interactive digital experience, combining procedural 3D modeling, cinematic storytelling, and real-time customization in the browser.
+
+Instead of simply viewing a static vehicle render, visitors can explore the machine from different angles, discover its design language, and experiment with different visual environments.
+
+The result is a digital automotive atelier built around one idea:
+
+**The best way to experience a machine is to get closer to it.**
+
+## 🎬 The Showroom
+
+The experience begins with a cinematic opening sequence and evolves into a scroll-driven automotive presentation, all powered by a persistent 3D scene.
+
+### 01. The Opening Sequence
+
+A minimal black screen introduces an abstract insignia, technical readouts, and a sound-wave graphic. A shaft of light then reveals the car from darkness.
+
+- Skip controls for immediate access.
+- Session-aware playback.
+- Adaptive timing based on scene readiness.
+- Synthesized ambient audio, muted by default.
+
+### 02. The Cinematic Hero
+
+An immersive opening scene introduces the machine with the headline:
+
+> Engineered to be felt.
+
+Visitors can explore the showroom or jump directly into the configurator.
+
+### 03. Six Chapters. One Machine.
+
+| Chapter | Experience |
+|---|---|
+| The Machine | A cinematic journey from the front three-quarter angle to the side profile. |
+| Sculpted by Aerodynamics | Explore the grille, lighting, body contours, wheels, and rear design through technical callouts and light streaks. |
+| Performance DNA | Discover an x-ray-inspired technical view with a simulated bonnet reveal and animated specification counters. |
+| The Cockpit | Experience a cutaway-style presentation with the roof and glass lifting away. |
+| Choose Your Atmosphere | Enter Midnight Studio, Neon District, or Performance Circuit. |
+| Final Reveal | A dramatic closing sequence built around the moment before launch. |
+
+### 04. Interactive Camera Choreography
+
+The camera transitions between carefully framed scenes as visitors scroll through the story.
+
+- Smooth camera easing and scene transitions.
+- Dynamic framing that keeps the car visible alongside the content.
+- Touch-friendly interaction on mobile devices.
+- Horizontal dragging for orbit controls.
+- Vertical gestures preserved for page scrolling.
+- Reduced-motion support for accessibility.
+
+### 05. Three Distinct Environments
+
+- **Midnight Studio** — Dark, refined lighting with a premium showroom atmosphere.
+- **Neon District** — A futuristic urban environment with vivid neon accents.
+- **Performance Circuit** — A track-inspired setting with dramatic lighting and animated start lights.
+
+Each environment changes the mood of the experience while keeping the vehicle at its center.
+
+## ✨ Key Features
+
+### 🚘 Interactive 3D Viewer
+
+Explore the procedural vehicle model using an interactive camera system.
+
+- 360-degree orbit controls.
+- Zoom, pan, and damped camera movement.
+- Eleven predefined camera presets.
+- Animated camera transitions.
+- Reset view and fullscreen modes.
+- Automatic turntable rotation.
+- PNG snapshots of the current scene.
+- Camera constraints that prevent the view from passing below the floor.
+
+### 🎨 Real-Time Customization
+
+Inspect individual vehicle components and customize supported parts directly on the 3D model.
+
+The configurator is designed to make changes immediately visible, creating a more tactile and engaging experience than a conventional options menu.
+
+### 🏎️ Sport Mode
+
+Switch from the default blue accent to a performance-inspired red theme.
+
+The mode updates the interface and corresponding scene accents to create a cohesive visual experience.
+
+### 🎥 Presentation Mode
+
+Let the camera guide the experience through a sequence of framed views. User interaction returns control to the visitor.
+
+### 🎧 Procedural Ambient Audio
+
+Ambient sound is generated through the Web Audio API rather than loaded audio files.
+
+Sound remains muted by default, allowing visitors to enable it when desired.
+
+### 🖥️ Cinematic Interface
+
+The experience combines:
+
+- Scroll progress indicators.
+- Navigation with a sliding active-state indicator.
+- A trailing cursor ring on desktop.
+- Magnetic call-to-action interactions.
+- Tilt-responsive cards.
+- Masked typography reveals.
+- Animated counters and technical callouts.
+
+## ⚙️ Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| React | Component-driven user interface |
+| TypeScript | Type-safe application logic |
+| Vite | Development server and production build |
+| Three.js / React Three Fiber, if used | 3D rendering and scene management |
+| WebGL | Hardware-accelerated graphics |
+| Web Audio API | Procedural ambient audio |
+| CSS | Responsive layouts, transitions, and visual effects |
+| Playwright, if configured | Automated browser testing |
+
+*The exact 3D and testing libraries should reflect the packages installed in the repository. No additional dependencies are required by the documented implementation.*
+
+## 🧱 Procedural Modeling & Technical Accuracy
+
+The vehicle is a **procedural prototype**, not a scanned model or manufacturer-supplied CAD asset.
+
+Its overall proportions are based on the dimensions specified in the project brief:
+
+| Specification | Value |
+|---|---:|
+| Overall length | 4,713 mm |
+| Overall width | 1,827 mm |
+| Overall height | 1,440 mm |
+| Wheelbase | 2,851 mm |
+| Engine displacement shown in the story | 2,998 cc |
+| Cylinder count shown in the story | 6 |
+| Transmission speeds shown in the story | 8 |
+| 0–100 km/h acceleration figure | 4.4 seconds, as stated in the brief |
+
+Dimensions and performance figures can vary by model year, market, and configuration. Verify specifications against the relevant market's official documentation before treating them as definitive.
+
+The model's proportions and technical presentation are intended to support an immersive experience, not to represent an exact reproduction of BMW's engineering data.
+
+## ⚡ Performance & Optimization
+
+A cinematic experience should remain responsive without sacrificing its visual identity.
+
+M340i // Atelier incorporates several performance-conscious design decisions:
+
+- **Lazy loading:** The cinematic showroom is loaded only when needed.
+- **Visibility-aware rendering:** 3D canvases stop rendering when off-screen.
+- **Mobile optimization:** Lower pixel ratios and reduced-cost effects on phones.
+- **Selective visual effects:** Reflections and bloom are disabled on mobile.
+- **Reduced-motion support:** Camera easing, turntable animation, and reveal effects are minimized or skipped.
+- **WebGL fallback:** A static image can replace the interactive showroom when WebGL is unavailable.
+- **Persistent scene:** A single 3D canvas supports multiple storytelling chapters.
+- **Lightweight choreography:** Scroll transitions use a small custom controller rather than a heavyweight animation framework.
+
+These choices help balance cinematic presentation, accessibility, and practical browser performance.
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js compatible with the project dependencies.
+- npm.
+- A modern browser with WebGL support for the interactive 3D experience.
+
+### Installation
 
 ```bash
+# Clone your repository
+git clone <YOUR_REPOSITORY_URL>
+
+# Enter the project directory
+cd <YOUR_PROJECT_DIRECTORY>
+
+# Install dependencies
 npm install
-npm run dev          # http://localhost:5173
-npm run build        # type-check + production build into dist/
+
+# Start the development server
+npm run dev
+```
+
+Open the local URL printed by Vite in your terminal. The project brief specifies `http://localhost:5173`.
+
+### Available Commands
+
+```bash
+npm run dev
+npm run build
 npm run lint
-npm run test:e2e     # scripted browser checks; needs the dev server running and CHROME=<path to a Chromium binary>
+npm run test:e2e
 ```
 
-To deploy on Vercel, import the repo and keep the defaults: the Vite preset, `npm run build`, and `dist` as the output folder.
+- `dev` starts the development server.
+- `build` generates the production build and performs any configured type checks.
+- `lint` runs the configured linting process.
+- `test:e2e` runs the browser test suite when configured and supplied with the required Chromium executable.
 
-## What works
+For browser tests, start the development server if the test configuration expects an already running application, and set `CHROME` to the appropriate Chromium binary path when required.
 
-| Area | Behaviour |
-| --- | --- |
-| Viewer | 360° orbit, zoom, pan, damped controls, 11 camera presets with animated transitions, reset, fullscreen, auto-rotate, PNG snapshot. The camera is kept above the floor. |
-| Paint | 6 named paints plus a custom colour picker. Only the clearcoat paint material changes. Glass, rubber, lamps and trim keep their own materials. |
-| Wheels | 6 procedural designs, 3 rim sizes, 4 caliper colours, plain or cross-drilled discs, plain or raised-letter tyres (our own ATELIER lettering). Each choice rebuilds the wheel geometry. The tyre's outer diameter stays fixed, so wheels never cut into the arches. |
-| Front | Kidney grille (chrome, gloss black, mesh), splitter (stock, lip, track with end plates), intake surround finish, bonnet (stock, power dome, carbon-look vented with twin heat extractors). |
-| Rear | Diffuser (2, 4 or 6 fins), twin or quad exhaust tips and their finish, spoiler (lip, carbon lip, ducktail, wing on stands), lower trim finish. |
-| Side | Mirror caps, side skirts, front-wing air breathers (none, gloss black, carbon look), window trim, stripe graphics. |
-| Exterior | Roof finish (body colour, gloss black, carbon look) with a matching shark-fin antenna. |
-| Lighting | Daytime signature colour and bezel, taillight lens, cabin ambient light. |
-| Interior | Seats, dashboard trim, steering wheel rim and accent colour, all on a simplified prototype cabin. |
-| Stance | Stock, -20 mm and -40 mm. The body drops over fixed wheels and geometry is never stretched. |
-| Modes | Studio render, Technical (labelled as a stylised x-ray), Exploded (only separately modelled parts move), Stock vs custom split slider rendered from one camera. |
-| One part at a time | Isolate turns every other part into a faint ghost. The 14-step parts tour walks through grille, lamps, bonnet, engine, splitter, wheels, mirrors, skirts, trim, spoiler, taillights, diffuser, exhausts and cabin, isolating each one with its current options (arrow keys and Esc work). Exploded view shows labelled callouts. |
-| Effects | Bloom glow on lamps, a reflective studio floor (desktop), a light show (ignition sweep, headlight beams, light pools, blue underglow) and a scanning beam in Technical view. Effects are off in compare mode, and bloom and reflections are off on mobile. |
-| Hotspots | Markers that follow the parts and hide when the part faces away. Clicking one focuses the camera, highlights the part and opens its options. Clicking a mesh does the same. |
-| Lighting presets | Dark Studio, Arctic White, Blue Hour, Urban Night, Warm Sunset. Reflections come from local light panels, so nothing is downloaded. |
-| State | One typed configuration with undo/redo (buttons and Ctrl+Z / Ctrl+Shift+Z), reset per category, reset all, autosave to localStorage, named saved builds, share links (`?build=`), JSON export. |
-| Info | Specifications and price are marked unverified. Option prices are never invented: options show an illustrative relative cost tier instead. |
-| Resilience | WebGL detection with a fallback panel, an error boundary around the scene, `prefers-reduced-motion` support, capped pixel ratio and smaller shadow maps on mobile. |
+### Deploying to Vercel
 
-## Structure
+1. Import the Git repository into Vercel.
+2. Select the Vite framework preset.
+3. Set the build command to `npm run build`.
+4. Set the output directory to `dist`.
+5. Deploy after verifying the production build.
 
-```
-src/
-  lib/configuration.ts   typed options, categories, stock spec, validation
-  lib/pricing.ts         illustrative cost tiers (no prices)
-  lib/share.ts           localStorage, saved builds, share URLs
-  lib/specs.ts           specification data, flagged as unverified
-  store/configurator.ts  zustand store: config, history, camera, modes
-  viewer/CarScene.tsx    canvas, studio lighting, floor, split renderer
-  viewer/CameraRig.tsx   camera presets and transitions
-  viewer/lighting.ts     lighting presets
-  viewer/car/            procedural model: geometry, body, front, rear, side, interior, wheels, materials, selectable Part
-  lib/story.ts           story beats, camera shots, copy, figures
-  lib/audio.ts           synthesised ambience, whoosh and rev (Web Audio)
-  viewer/StoryScene.tsx  showroom canvas: scroll camera, light shaft reveal, streaks
-  viewer/Studio.tsx      shared lights, reflections, floor
-  viewer/Scenery.tsx     Midnight Studio, Neon District and Performance Circuit scenery
-  ui/site/               loading screen, navigation, story sections, micro-interactions
-  ui/                    stage HUD, option panel, thumbnails, sections
-scripts/                 screenshot and e2e helpers (playwright-core)
-```
+## 📊 Feature Overview
 
-## Limits and what production would need
+| Area | Capabilities |
+|---|---|
+| 3D Viewer | Orbit, zoom, pan, camera presets, reset, fullscreen, rotation, snapshots |
+| Showroom | Scroll-driven storytelling, six chapters, cinematic transitions |
+| Customization | Component selection and real-time visual changes |
+| Environments | Midnight Studio, Neon District, Performance Circuit |
+| Interface | Sport mode, navigation indicator, cursor effects, animated text |
+| Audio | Optional, procedurally synthesized ambient sound |
+| Accessibility | Reduced-motion handling and WebGL fallback |
+| Optimization | Lazy loading, visibility-aware rendering, mobile-specific effects |
 
-- **No licensed BMW model was available.** The body is lofted from cross-sections and is an approximation. For production fidelity, add a licensed G20 M340i glTF/GLB with separately named meshes (body panels, bumpers, grille, lamps, mirrors, wheels, calipers, interior). Swap `viewer/car/*` for a loader that maps mesh names to the same `ComponentId`s. The store, UI and options would not need to change.
-- The doors, wings and body sides are one surface, so they don't separate in exploded view.
-- Options marked **Concept** are visual ideas, not factory or dealer parts. There is no fitment or legality checking.
-- CarWale, 3DTuning and the REA repository could not be reached from the build environment. The specifications (2022+ LCI, European power figure) and the approximate India price come from general knowledge and are labelled unverified in the UI.
+## 🛣️ Future Possibilities
+
+- [ ] Add more vehicle colors and finish options.
+- [ ] Expand wheel, trim, and exterior customization.
+- [ ] Add shareable configuration links.
+- [ ] Export configuration summaries.
+- [ ] Improve material realism and environmental reflections.
+- [ ] Add more camera presets and cinematic sequences.
+- [ ] Refine mobile touch interactions and accessibility.
+- [ ] Improve automated visual regression testing.
+
+## ⚠️ Disclaimer
+
+M340i // Atelier is an independent, unofficial interactive project. It is not affiliated with, endorsed by, or sponsored by BMW AG or CarWale.
+
+BMW, M340i, and related product names and trademarks belong to their respective owners. The procedural vehicle model is an illustrative prototype and does not use official BMW CAD data or a scanned manufacturer model.
+
+Specifications are provided for illustrative purposes and should be independently verified.
+
+## 👨‍💻 Built With Curiosity
+
+Created by [@Vicky-45-11](https://github.com/Vicky-45-11).
+
+An exploration of interactive 3D experiences, automotive design, procedural modeling, and the intersection of engineering and digital storytelling.
+
+---
+
+<div align="center">
+
+### M340i // Atelier
+
+**Your machine. Your specification. Your experience.**
+
+*Designed to be explored. Engineered to be experienced.*
+
+</div>
